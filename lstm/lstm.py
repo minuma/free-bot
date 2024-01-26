@@ -5,6 +5,30 @@ from sklearn.preprocessing import StandardScaler
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense, Dropout
 
+def calculate_divergence_max(df):
+    # 乖離度の計算
+    df['divergence'] = df['MA_9'] - df['MA_100']
+
+    # 交差点の特定
+    df['cross'] = 0
+    for i in range(1, len(df)):
+        if (df['MA_9'].iloc[i] > df['MA_100'].iloc[i] and df['MA_9'].iloc[i - 1] <= df['MA_100'].iloc[i - 1]) or \
+           (df['MA_9'].iloc[i] < df['MA_100'].iloc[i] and df['MA_9'].iloc[i - 1] >= df['MA_100'].iloc[i - 1]):
+            df['cross'].iloc[i] = 1
+
+    # 最大乖離度の計算
+    max_divergence = 0
+    df['max_divergence'] = 0
+    for i in range(1, len(df)):
+        if df['cross'].iloc[i] == 1:
+            max_divergence = 0
+        else:
+            max_divergence = max(max_divergence, abs(df['divergence'].iloc[i]))
+        df['max_divergence'].iloc[i] = max_divergence
+
+    return df
+
+
 def load_data():
     # JSONファイルからデータを読み込む
     with open('lstm/historical/csv/historical_price.json', 'r') as file:
@@ -21,8 +45,11 @@ def load_data():
     # NaN値を取り除く
     df.dropna(inplace=True)
 
+    # 乖離度と最大乖離度の計算
+    df = calculate_divergence_max(df)
+
     # 特徴量とラベルの準備
-    X = df[['price_close', 'MA_9', 'MA_100']].values
+    X = df[['price_close', 'MA_9', 'MA_100', 'divergence', 'max_divergence']].values
     y = df['price_close'].values
 
     return X, y
