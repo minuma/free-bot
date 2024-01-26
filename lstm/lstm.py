@@ -28,12 +28,26 @@ def calculate_divergence_max(df):
 
     return df
 
+def calculate_obv(data):
+    obv = [0]
+    for i in range(1, len(data)):
+        if data['price_close'][i] > data['price_close'][i-1]:
+            obv.append(obv[-1] + data['volume'][i])
+        elif data['price_close'][i] < data['price_close'][i-1]:
+            obv.append(obv[-1] - data['volume'][i])
+        else:
+            obv.append(obv[-1])
+    return obv
+
+
+
 
 def load_data():
     # JSONファイルからデータを読み込む
     with open('lstm/historical/csv/historical_price.json', 'r') as file:
         data = json.load(file)
         price_data = [item['price_close'] for item in data['data']]
+        data_df = pd.DataFrame(data['data'])
 
     # Pandas DataFrameを作成
     df = pd.DataFrame(price_data, columns=['price_close'])
@@ -42,11 +56,14 @@ def load_data():
     df['MA_9'] = df['price_close'].rolling(window=9).mean()
     df['MA_100'] = df['price_close'].rolling(window=100).mean()
 
+    # OBVの計算
+    df['OBV'] = calculate_obv(data_df)
+
     # 乖離度と最大乖離度の計算
     df = calculate_divergence_max(df)
 
     # シフトするタイムステップの設定（例：2ステップ先を予測）
-    shift_steps = 2
+    shift_steps = 3
 
     # ラベル（将来のdivergence）の準備
     df['future_divergence'] = df['divergence'].shift(-shift_steps)
@@ -55,9 +72,9 @@ def load_data():
     df.dropna(inplace=True)
 
     # 特徴量とラベルの定義
-    X = df[['price_close', 'MA_9', 'MA_100', 'divergence', 'max_divergence']].values
+    X = df[['MA_9', 'MA_100', 'divergence', 'max_divergence', 'OBV']].values
     y = df['future_divergence'].values
-    
+
     return X, y
 
 def shape_data(X, y):
@@ -66,7 +83,7 @@ def shape_data(X, y):
     X_scaled = scaler.fit_transform(X)
 
     # 時系列データの整形
-    timesteps = 20 
+    timesteps = 100
     X_seq, y_seq = [], []
     for i in range(timesteps, len(X_scaled)):
         X_seq.append(X_scaled[i-timesteps:i])
