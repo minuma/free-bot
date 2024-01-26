@@ -15,8 +15,11 @@ def shape_data(df, timesteps=24, is_predict=False):
     df.dropna(inplace=True)
 
     # 特徴量とラベルの定義
+    # TODO: OBVは値の変化量が大きすぎるため、学習には不適
     X = df[['price_close', 'MA_9', 'MA_100', 'divergence', 'max_divergence', 'OBV']].values
     y = df['future_divergence'].values
+    df.to_csv('./df.csv', index=False)
+
 
     # データのスケーリング
     scaler_file = './models/scaler.joblib'
@@ -72,5 +75,5 @@ def calculate_obv(data):
             obv.append(obv[-1] - data['volume'][i])
         else:
             obv.append(obv[-1])
-    obv = [x / 1000 for x in obv]
+    obv = [x / 1000000 for x in obv]
     return obv
