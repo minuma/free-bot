@@ -42,16 +42,22 @@ def load_data():
     df['MA_9'] = df['price_close'].rolling(window=9).mean()
     df['MA_100'] = df['price_close'].rolling(window=100).mean()
 
-    # NaN値を取り除く
-    df.dropna(inplace=True)
-
     # 乖離度と最大乖離度の計算
     df = calculate_divergence_max(df)
 
-    # 特徴量とラベルの準備
-    X = df[['price_close', 'MA_9', 'MA_100', 'divergence', 'max_divergence']].values
-    y = df['price_close'].values
+    # シフトするタイムステップの設定（例：2ステップ先を予測）
+    shift_steps = 2
 
+    # ラベル（将来のdivergence）の準備
+    df['future_divergence'] = df['divergence'].shift(-shift_steps)
+
+    # NaN値を含む行を削除
+    df.dropna(inplace=True)
+
+    # 特徴量とラベルの定義
+    X = df[['price_close', 'MA_9', 'MA_100', 'divergence', 'max_divergence']].values
+    y = df['future_divergence'].values
+    
     return X, y
 
 def shape_data(X, y):
