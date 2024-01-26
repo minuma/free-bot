@@ -33,7 +33,7 @@ def shape_data(X, y):
     X_scaled = scaler.fit_transform(X)
 
     # 時系列データの整形
-    timesteps = 10
+    timesteps = 20 
     X_seq, y_seq = [], []
     for i in range(timesteps, len(X_scaled)):
         X_seq.append(X_scaled[i-timesteps:i])
@@ -44,7 +44,7 @@ def shape_data(X, y):
 
     return X_seq, y_seq
 
-def build_model(X_seq, y_seq):
+def build_model(X_seq):
     # LSTMモデルの構築
     model = Sequential()
     model.add(LSTM(50, return_sequences=True, input_shape=(X_seq.shape[1], X_seq.shape[2])))
@@ -57,7 +57,7 @@ def build_model(X_seq, y_seq):
 
 X, y = load_data()
 X_seq, y_seq = shape_data(X, y)
-model = build_model(X_seq, y_seq)
+model = build_model(X_seq)
 
 # モデルのコンパイル
 model.compile(optimizer='adam', loss='mean_squared_error')
