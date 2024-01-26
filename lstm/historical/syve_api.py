@@ -15,7 +15,7 @@ class SyveApi:
         params = {
             'token_address': self.token_address,
             'pool_address': self.pool_address,
-            'interval': '10m',
+            'interval': '2h',
             'max_size': 1000,
             'key': os.getenv('API_KEY')
         }

@@ -39,28 +39,46 @@ def calculate_obv(data):
             obv.append(obv[-1])
     return obv
 
+def calculate_obv_max(data):
+    obv = calculate_obv(data)
+    data['OBV'] = obv
 
+    # 絶対値の最大値を計算し、crossの度にリセット
+    max_abs_obv = 0
+    data['max_abs_obv'] = 0
+    for i in range(1, len(data)):
+        if data['cross'].iloc[i] == 1:
+            max_abs_obv = 0
+        else:
+            # OBVの絶対値が最大のものを選択
+            max_abs_obv = max(max_abs_obv, abs(data['OBV'].iloc[i]))
+        data['max_abs_obv'].iloc[i] = max_abs_obv
+
+    return data
 
 
 def load_data():
     # JSONファイルからデータを読み込む
     with open('lstm/historical/csv/historical_price.json', 'r') as file:
         data = json.load(file)
-        price_data = [item['price_close'] for item in data['data']]
-        data_df = pd.DataFrame(data['data'])
 
-    # Pandas DataFrameを作成
-    df = pd.DataFrame(price_data, columns=['price_close'])
+        # price_closeとvolumeをリストとして取得
+        price_close_data = [item['price_close'] for item in data['data']]
+        volume_data = [item['volume'] for item in data['data']]
+
+        # Pandas DataFrameを作成
+        df = pd.DataFrame({
+            'price_close': price_close_data,
+            'volume': volume_data
+        })
 
     # 移動平均の計算
     df['MA_9'] = df['price_close'].rolling(window=9).mean()
     df['MA_100'] = df['price_close'].rolling(window=100).mean()
 
-    # OBVの計算
-    df['OBV'] = calculate_obv(data_df)
-
     # 乖離度と最大乖離度の計算
     df = calculate_divergence_max(df)
+    df = calculate_obv_max(df)
 
     # シフトするタイムステップの設定（例：2ステップ先を予測）
     shift_steps = 3
@@ -72,8 +90,10 @@ def load_data():
     df.dropna(inplace=True)
 
     # 特徴量とラベルの定義
-    X = df[['MA_9', 'MA_100', 'divergence', 'max_divergence', 'OBV']].values
+    X = df[['MA_9', 'MA_100', 'divergence', 'max_divergence', 'OBV', 'max_abs_obv']].values
     y = df['future_divergence'].values
+    df.to_csv('./df.csv', index=False)
+
 
     return X, y
 
@@ -83,7 +103,7 @@ def shape_data(X, y):
     X_scaled = scaler.fit_transform(X)
 
     # 時系列データの整形
-    timesteps = 100
+    timesteps = 30
     X_seq, y_seq = [], []
     for i in range(timesteps, len(X_scaled)):
         X_seq.append(X_scaled[i-timesteps:i])
@@ -105,15 +125,18 @@ def build_model(X_seq):
 
     return model
 
-X, y = load_data()
-X_seq, y_seq = shape_data(X, y)
-model = build_model(X_seq)
+if __name__ == '__main__':
+    X, y = load_data()
 
-# モデルのコンパイル
-model.compile(optimizer='adam', loss='mean_squared_error')
+    # # データの整形
+    # X_seq, y_seq = shape_data(X, y)
+    # model = build_model(X_seq)
 
-# モデルの訓練
-model.fit(X_seq, y_seq, epochs=10, batch_size=32)
+    # # モデルのコンパイル
+    # model.compile(optimizer='adam', loss='mean_squared_error')
 
-# モデルの保存
-model.save('lstm_model.h5')
+    # # モデルの訓練
+    # model.fit(X_seq, y_seq, epochs=10, batch_size=32)
+
+    # # モデルの保存
+    # model.save('lstm_model.h5')
