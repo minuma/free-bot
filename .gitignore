@@ -2,3 +2,4 @@
 .env
 *.h5
 *.json
+*.joblib

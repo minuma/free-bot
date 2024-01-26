@@ -4,6 +4,9 @@ import numpy as np
 from sklearn.preprocessing import StandardScaler
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense, Dropout
+from keras.callbacks import EarlyStopping
+import joblib
+
 
 def calculate_divergence_max(df):
     # 乖離度の計算
@@ -59,17 +62,20 @@ def calculate_obv_max(data):
 
 def load_data():
     # JSONファイルからデータを読み込む
-    with open('lstm/historical/csv/historical_price_2023.json', 'r') as file:
+    # with open('lstm/historical/csv/historical_price.json', 'r') as file:
+    with open('lstm/historical/csv/historical_price_202307.json', 'r') as file:
         data = json.load(file)
 
         # price_closeとvolumeをリストとして取得
         price_close_data = [item['price_close'] for item in data['data']]
         volume_data = [item['volume'] for item in data['data']]
+        date = [item['date_close'] for item in data['data']]
 
         # Pandas DataFrameを作成
         df = pd.DataFrame({
             'price_close': price_close_data,
-            'volume': volume_data
+            'volume': volume_data,
+            'date_close': date,
         })
 
     # 移動平均の計算
@@ -81,7 +87,7 @@ def load_data():
     df = calculate_obv_max(df)
 
     # シフトするタイムステップの設定（例：2ステップ先を予測）
-    shift_steps = 3
+    shift_steps = 5
 
     # ラベル（将来のdivergence）の準備
     df['future_divergence'] = df['divergence'].shift(-shift_steps)
@@ -97,10 +103,15 @@ def load_data():
 
     return X, y
 
-def shape_data(X, y):
+def shape_data(X, y, is_predict=False):
     # データのスケーリング
-    scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X)
+    if not is_predict:
+        scaler = StandardScaler()
+        X_scaled = scaler.fit_transform(X)
+        joblib.dump(scaler, './models/scaler.joblib')
+    else:
+        scaler = joblib.load('./models/scaler.joblib')
+        X_scaled = scaler.transform(X)
 
     # 時系列データの整形
     timesteps = 30
@@ -118,10 +129,15 @@ def build_model(X_seq):
     # LSTMモデルの構築
     model = Sequential()
     model.add(LSTM(50, return_sequences=True, input_shape=(X_seq.shape[1], X_seq.shape[2])))
-    model.add(Dropout(0.2))
+    model.add(Dropout(0.25))
     model.add(LSTM(50, return_sequences=False))
-    model.add(Dropout(0.2))
+    model.add(Dropout(0.25))
     model.add(Dense(1))
+
+    # 損失関数と評価指標の変更
+    model.compile(loss='mean_squared_error',
+                  optimizer='adam',
+                  metrics=['mean_squared_error'])
 
     return model
 
@@ -131,11 +147,11 @@ import math
 
 def validate_model(X_test, y_test):
     # モデルの読み込み
-    model = load_model('lstm_model.h5')
+    model = load_model('./models/lstm_model.h5')
 
     # テストデータセットでの予測
     y_pred = model.predict(X_test)
-    
+
     # y_predをNumPy配列からDataFrameに変換
     y_pred_df = pd.DataFrame(y_pred, columns=['y_pred'])
     y_pred_df.to_csv('y_pred.csv', index=False)
@@ -159,17 +175,23 @@ if __name__ == '__main__':
     # データの整形
     X_seq, y_seq = shape_data(X, y)
 
-    # データのテスト
-    validate_model(X_seq, y_seq)
+    # # データのテスト
+    # validate_model(X_seq, y_seq)
 
     # モデルの構築
-    # model = build_model(X_seq)
+    model = build_model(X_seq)
 
-    # # モデルのコンパイル
-    # model.compile(optimizer='adam', loss='mean_squared_error')
+    # 分割の割合を定義
+    train_size = int(len(X_seq) * 0.8)
+    # 訓練データと検証データに分割
+    X_train, X_val = X_seq[:train_size], X_seq[train_size:]
+    y_train, y_val = y_seq[:train_size], y_seq[train_size:]
 
-    # # モデルの訓練
-    # model.fit(X_seq, y_seq, epochs=20, batch_size=32)
+    # 早期停止の設定
+    early_stopping = EarlyStopping(monitor='val_loss', patience=5)
 
-    # # モデルの保存
-    # model.save('lstm_model.h5')
+    # モデルの訓練（検証セットを含む）
+    model.fit(X_train, y_train, validation_data=(X_val, y_val), epochs=5, callbacks=[early_stopping])
+
+    # モデルの保存
+    model.save('./models/lstm_model.h5')
