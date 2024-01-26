@@ -59,7 +59,7 @@ def calculate_obv_max(data):
 
 def load_data():
     # JSONファイルからデータを読み込む
-    with open('lstm/historical/csv/historical_price.json', 'r') as file:
+    with open('lstm/historical/csv/historical_price_2023.json', 'r') as file:
         data = json.load(file)
 
         # price_closeとvolumeをリストとして取得
@@ -125,18 +125,51 @@ def build_model(X_seq):
 
     return model
 
+from tensorflow.keras.models import load_model
+from sklearn.metrics import mean_squared_error, mean_absolute_error
+import math
+
+def validate_model(X_test, y_test):
+    # モデルの読み込み
+    model = load_model('lstm_model.h5')
+
+    # テストデータセットでの予測
+    y_pred = model.predict(X_test)
+    
+    # y_predをNumPy配列からDataFrameに変換
+    y_pred_df = pd.DataFrame(y_pred, columns=['y_pred'])
+    y_pred_df.to_csv('y_pred.csv', index=False)
+
+    # 評価指標の計算
+    mse = mean_squared_error(y_test, y_pred)
+    mae = mean_absolute_error(y_test, y_pred)
+    rmse = math.sqrt(mse)
+
+    print(f"平均絶対誤差（MAE）: {mae}")
+    print(f"平均二乗誤差（MSE）: {mse}")
+    print(f"ルート平均二乗誤差（RMSE）: {rmse}")
+
+    # オーバーフィットの確認
+    # 訓練データとテストデータの評価指標を比較
+
+
 if __name__ == '__main__':
     X, y = load_data()
 
-    # # データの整形
-    # X_seq, y_seq = shape_data(X, y)
+    # データの整形
+    X_seq, y_seq = shape_data(X, y)
+
+    # データのテスト
+    validate_model(X_seq, y_seq)
+
+    # モデルの構築
     # model = build_model(X_seq)
 
     # # モデルのコンパイル
     # model.compile(optimizer='adam', loss='mean_squared_error')
 
     # # モデルの訓練
-    # model.fit(X_seq, y_seq, epochs=10, batch_size=32)
+    # model.fit(X_seq, y_seq, epochs=20, batch_size=32)
 
     # # モデルの保存
     # model.save('lstm_model.h5')
