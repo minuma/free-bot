@@ -6,6 +6,7 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense, Dropout
 from keras.callbacks import EarlyStopping
 import joblib
+from datetime import datetime, timedelta
 
 
 def calculate_divergence_max(df):
@@ -62,8 +63,8 @@ def calculate_obv_max(data):
 
 def load_data():
     # JSONファイルからデータを読み込む
-    # with open('lstm/historical/csv/historical_price.json', 'r') as file:
-    with open('lstm/historical/csv/historical_price_202307.json', 'r') as file:
+    with open('lstm/historical/csv/historical_price.json', 'r') as file:
+    # with open('lstm/historical/csv/historical_price_202307.json', 'r') as file:
         data = json.load(file)
 
         # price_closeとvolumeをリストとして取得
@@ -77,6 +78,7 @@ def load_data():
             'volume': volume_data,
             'date_close': date,
         })
+        df['date_close'] = pd.to_datetime(df['date_close']).dt.tz_convert('Asia/Tokyo')
 
     # 移動平均の計算
     df['MA_9'] = df['price_close'].rolling(window=9).mean()
@@ -173,25 +175,25 @@ if __name__ == '__main__':
     X, y = load_data()
 
     # データの整形
-    X_seq, y_seq = shape_data(X, y)
+    X_seq, y_seq = shape_data(X, y, is_predict=True)
 
-    # # データのテスト
-    # validate_model(X_seq, y_seq)
+    # データのテスト
+    validate_model(X_seq, y_seq)
 
-    # モデルの構築
-    model = build_model(X_seq)
+    # # モデルの構築
+    # model = build_model(X_seq)
 
-    # 分割の割合を定義
-    train_size = int(len(X_seq) * 0.8)
-    # 訓練データと検証データに分割
-    X_train, X_val = X_seq[:train_size], X_seq[train_size:]
-    y_train, y_val = y_seq[:train_size], y_seq[train_size:]
+    # # 分割の割合を定義
+    # train_size = int(len(X_seq) * 0.8)
+    # # 訓練データと検証データに分割
+    # X_train, X_val = X_seq[:train_size], X_seq[train_size:]
+    # y_train, y_val = y_seq[:train_size], y_seq[train_size:]
 
-    # 早期停止の設定
-    early_stopping = EarlyStopping(monitor='val_loss', patience=5)
+    # # 早期停止の設定
+    # early_stopping = EarlyStopping(monitor='val_loss', patience=3)
 
-    # モデルの訓練（検証セットを含む）
-    model.fit(X_train, y_train, validation_data=(X_val, y_val), epochs=5, callbacks=[early_stopping])
+    # # モデルの訓練（検証セットを含む）
+    # model.fit(X_train, y_train, validation_data=(X_val, y_val), epochs=20, callbacks=[early_stopping])
 
-    # モデルの保存
-    model.save('./models/lstm_model.h5')
+    # # モデルの保存
+    # model.save('./models/lstm_model.h5')
