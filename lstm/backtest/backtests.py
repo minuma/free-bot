@@ -49,26 +49,63 @@ y_pred_df_extended = pd.concat([nan_rows, y_pred_df], ignore_index=True)
 # df_trimmedに予測値を追加
 df_trimmed = df_trimmed.reset_index(drop=True)
 df_trimmed['predicted_value'] = y_pred_df_extended
-df_trimmed['diff'] = df_trimmed['predicted_value'].diff()
+# df_trimmed['diff'] = df_trimmed['predicted_value'].diff()
 
-def generate_signal(row):
-    if row['diff'] > 0:
-        if row['predicted_value'] < 0 and abs(row['predicted_value']) < some_threshold:
-            return '売り'
-        else:
-            return '買い'
-    elif row['diff'] < 0:
-        # if row['predicted_value'] > 0 and abs(row['predicted_value']) < some_threshold:
-        #     return '買い'
-        # else:
-        return '売り'
+# def generate_signal(row):
+#     if row['diff'] > 0:
+#         if row['predicted_value'] < 0 and abs(row['predicted_value']) < some_threshold:
+#             return '売り'
+#         else:
+#             return '買い'
+#     elif row['diff'] < 0:
+#         # if row['predicted_value'] > 0 and abs(row['predicted_value']) < some_threshold:
+#         #     return '買い'
+#         # else:
+#         return '売り'
+#     else:
+#         return 'アクションなし'
+
+# # some_thresholdには、買いシグナルを生成するための閾値を設定
+# some_threshold = 0.008
+
+# トレンドを識別するための移動平均
+df_trimmed['predicted_ma'] = df_trimmed['predicted_value'].rolling(window=5).mean()
+
+def generate_combined_signal(row):
+    # トレンドの識別
+    if row['predicted_ma'] > upper_trend_threshold:
+        trend = '上向き'
+    elif row['predicted_ma'] < lower_trend_threshold:
+        trend = '下向き'
     else:
-        return 'アクションなし'
+        trend = '無し'
 
-# some_thresholdには、買いシグナルを生成するための閾値を設定
-some_threshold = 0.008
+    # 逆張り条件
+    if trend == '上向き' and row['predicted_value'] < row['predicted_ma'] * (1 - reversal_threshold):
+        return '買い'
+    elif trend == '下向き' and row['predicted_value'] > row['predicted_ma'] * (1 + reversal_threshold):
+        return '売り'
 
-df_trimmed['signal'] = df_trimmed.apply(generate_signal, axis=1)
+    # ブレイクアウト条件
+    if row['predicted_value'] > breakout_threshold:
+        return '買い'
+    elif row['predicted_value'] < breakdown_threshold:
+        return '売り'
+
+    return 'アクションなし'
+
+# 閾値の設定
+upper_trend_threshold = 0.01
+lower_trend_threshold = 0.01
+reversal_threshold = 0.05  # 5%の逆張り閾値
+breakout_threshold = 0.01
+breakdown_threshold = 0.01
+
+# シグナルの生成
+# df['signal'] = df.apply(generate_combined_signal, axis=1)
+
+
+df_trimmed['signal'] = df_trimmed.apply(generate_combined_signal, axis=1)
 
 # # バックテストのロジック
 # df_trimmed['signal'] = df_trimmed['predicted_value'].diff().apply(
