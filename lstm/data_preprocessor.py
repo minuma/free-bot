@@ -8,6 +8,10 @@ def shape_data(df, timesteps=24, is_predict=False):
     df['MA_100'] = df['price_close'].rolling(window=100).mean()
     df = calculate_divergence_max(df)
     df['OBV'] = calculate_obv(df)
+    # 新しい特徴量の追加
+    df['VWAP'] = calculate_vwap(df)
+    df['MFI'] = calculate_mfi(df)
+    df['Volume_Oscillator'] = calculate_volume_oscillator(df)
     
     # シフトするタイムステップの設定（例：3ステップ先を予測）
     shift_steps = 3
@@ -16,7 +20,7 @@ def shape_data(df, timesteps=24, is_predict=False):
 
     # 特徴量とラベルの定義
     # TODO: OBVは値の変化量が大きすぎるため、学習には不適
-    X = df[['price_close', 'MA_9', 'MA_100', 'divergence', 'max_divergence', 'OBV']].values
+    X = df[['price_close', 'MA_9', 'MA_100', 'divergence', 'max_divergence', 'VWAP', 'MFI', 'Volume_Oscillator']].values
     y = df['future_divergence'].values
     df.to_csv('./df.csv', index=False)
 
@@ -77,3 +81,30 @@ def calculate_obv(data):
             obv.append(obv[-1])
     obv = [x / 1000000 for x in obv]
     return obv
+
+
+def calculate_vwap(data):
+    vwap = (data['price_close'] * data['volume']).cumsum() / data['volume'].cumsum()
+    return vwap
+
+def calculate_mfi(data, period=14):
+    # 1日変化量
+    delta = data['price_close'].diff()
+
+    # 値上がりと値下がり
+    up = delta.clip(lower=0) * data['volume']
+    down = -1 * delta.clip(upper=0) * data['volume']
+
+    # 値上がりと値下がりの合計
+    up_sum = up.rolling(window=period).sum()
+    down_sum = down.rolling(window=period).sum()
+
+    # MFIの計算
+    mfi = 100 - (100 / (1 + (up_sum / down_sum)))
+    return mfi
+
+def calculate_volume_oscillator(data, short_period=5, long_period=10):
+    short_ma = data['volume'].rolling(window=short_period).mean()
+    long_ma = data['volume'].rolling(window=long_period).mean()
+    vo = (short_ma - long_ma) / long_ma
+    return vo
