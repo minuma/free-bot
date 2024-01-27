@@ -1,6 +1,8 @@
 import pandas as pd
 import json
 import matplotlib.pyplot as plt
+import numpy as np
+
 
 from tensorflow.keras.models import load_model
 
@@ -34,17 +36,44 @@ y_pred = model.predict(X_seq)
 timesteps = 24  # shape_data関数に合わせて調整
 # dfをtimesteps分だけトリミング
 df_trimmed = df.iloc[timesteps:]
+
 # 予測値をDataFrameに変換
 y_pred_df = pd.DataFrame(y_pred, columns=['predicted_value'])
+# df_trimmedとy_pred_dfの長さの差を計算
+length_diff = len(df_trimmed) - len(y_pred_df)
+
+# y_pred_dfの先頭にNaN行を追加して長さを合わせる
+nan_rows = pd.DataFrame({'predicted_value': [np.nan] * length_diff})
+y_pred_df_extended = pd.concat([nan_rows, y_pred_df], ignore_index=True)
+
 # df_trimmedに予測値を追加
 df_trimmed = df_trimmed.reset_index(drop=True)
-df_trimmed['predicted_value'] = y_pred_df
+df_trimmed['predicted_value'] = y_pred_df_extended
+df_trimmed['diff'] = df_trimmed['predicted_value'].diff()
 
+def generate_signal(row):
+    if row['diff'] > 0:
+        if row['predicted_value'] < 0 and abs(row['predicted_value']) < some_threshold:
+            return '売り'
+        else:
+            return '買い'
+    elif row['diff'] < 0:
+        # if row['predicted_value'] > 0 and abs(row['predicted_value']) < some_threshold:
+        #     return '買い'
+        # else:
+        return '売り'
+    else:
+        return 'アクションなし'
 
-# バックテストのロジック
-df_trimmed['signal'] = df_trimmed['predicted_value'].diff().apply(
-    lambda x: '買い' if x > 0 else ('売り' if x < 0 else 'アクションなし')
-)
+# some_thresholdには、買いシグナルを生成するための閾値を設定
+some_threshold = 0.008
+
+df_trimmed['signal'] = df_trimmed.apply(generate_signal, axis=1)
+
+# # バックテストのロジック
+# df_trimmed['signal'] = df_trimmed['predicted_value'].diff().apply(
+#     lambda x: '買い' if x > 0 else ('売り' if x < 0 else 'アクションなし')
+# )
 
 df_trimmed.to_csv('backtest.csv')
 

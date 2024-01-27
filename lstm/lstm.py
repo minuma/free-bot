@@ -60,25 +60,25 @@ if __name__ == '__main__':
     df = load_data()
 
     # データの整形
-    X_seq, y_seq = shape_data(df, is_predict=False)
+    X_seq, y_seq = shape_data(df, is_predict=True)
 
     # データのテスト
-    # validate_model(X_seq, y_seq)
+    validate_model(X_seq, y_seq)
 
-    # モデルの構築
-    model = build_model(X_seq)
+    # # モデルの構築
+    # model = build_model(X_seq)
 
-    # 分割の割合を定義
-    train_size = int(len(X_seq) * 0.8)
-    # 訓練データと検証データに分割
-    X_train, X_val = X_seq[:train_size], X_seq[train_size:]
-    y_train, y_val = y_seq[:train_size], y_seq[train_size:]
+    # # 分割の割合を定義
+    # train_size = int(len(X_seq) * 0.8)
+    # # 訓練データと検証データに分割
+    # X_train, X_val = X_seq[:train_size], X_seq[train_size:]
+    # y_train, y_val = y_seq[:train_size], y_seq[train_size:]
 
-    # 早期停止の設定
-    early_stopping = EarlyStopping(monitor='val_loss', patience=5)
+    # # 早期停止の設定
+    # early_stopping = EarlyStopping(monitor='val_loss', patience=5)
 
-    # モデルの訓練（検証セットを含む）
-    model.fit(X_train, y_train, validation_data=(X_val, y_val), epochs=20, callbacks=[early_stopping])
+    # # モデルの訓練（検証セットを含む）
+    # model.fit(X_train, y_train, validation_data=(X_val, y_val), epochs=20, callbacks=[early_stopping])
 
-    # モデルの保存
-    model.save('./models/lstm_model.h5')
+    # # モデルの保存
+    # model.save('./models/lstm_model.h5')
