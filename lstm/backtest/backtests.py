@@ -15,7 +15,7 @@ from lstm.data_preprocessor import shape_data
 
 
 # データの読み込み
-with open('lstm/historical/csv/historical_price.json', 'r') as file:
+with open('lstm/historical/csv/historical_price_20230601.json', 'r') as file:
     data = json.load(file)
 
 # Pandas DataFrameに変換
@@ -58,7 +58,10 @@ adjusted_meta_pred[selected_indices] = meta_predictions.flatten()  # 選択さ�
 # NaN値を含むadjusted_y_predを使用してsignal列を生成
 adjusted_y_pred = np.nan_to_num(adjusted_y_pred, nan=0)
 df_trimmed.loc[:, 'adjusted_y_pred'] = adjusted_y_pred
-df_trimmed.loc[:, 'signal'] = np.where(df_trimmed['adjusted_y_pred'] > 0.5, '買い', '売り')
+# TODO: 0.5以上、-0.5以下の場合に買い、売り, その他はアクションなしのシグナルを生成に変更
+# df_trimmed.loc[:, 'signal'] = np.where(df_trimmed['adjusted_y_pred'] > 0.5, '買い', '売り')
+df_trimmed.loc[:, 'signal'] = np.where(df_trimmed['adjusted_y_pred'] > 0.5, '買い', np.where(df_trimmed['adjusted_y_pred'] < -0.5, '売り', 'アクションなし'))
+
 
 
 # メタモデルの予測に基づいてmeta_signal列を生成

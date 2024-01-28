@@ -44,16 +44,16 @@ def build_model(X_seq):
     model = Sequential()
 
     # LSTM層のサイズと数を調整
-    model.add(LSTM(64, return_sequences=True, input_shape=(X_seq.shape[1], X_seq.shape[2])))
-    model.add(Dropout(0.3))
+    model.add(LSTM(32, return_sequences=True, input_shape=(X_seq.shape[1], X_seq.shape[2])))
+    model.add(Dropout(0.2))
     model.add(LSTM(32, return_sequences=False))
-    model.add(Dropout(0.3))
+    model.add(Dropout(0.2))
 
     # 中間層
     model.add(Dense(16, activation='relu'))
 
     # 出力層にtanh活性化関数を使用
-    model.add(Dense(1, activation='tanh'))
+    model.add(Dense(2, activation='tanh'))
 
     # 損失関数をmean_absolute_errorに変更、最適化アルゴリズムをAdamに
     model.compile(loss='mean_absolute_error',
@@ -112,6 +112,8 @@ def filter_data_for_meta_labeling(X, y, model):
     selected_indices = np.where((y_pred > 0.5) | (y_pred < -0.5))[0]  # 閾値を調整
     if selected_indices.size == 0:
         print('No data selected for meta labeling!!!!!')
+        y_pred_df = pd.DataFrame({'predicted_values': y_pred.flatten()})
+        y_pred_df.to_csv('predicted_values.csv', index=False)
         return None, None
 
     return X[selected_indices], y[selected_indices]
@@ -142,6 +144,8 @@ def train_meta_model():
 
     # メタラベリングのためのデータフィルタリング
     X_meta, y_meta = filter_data_for_meta_labeling(X_seq, y_seq, lstm_model)
+    if X_meta is None or y_meta is None:
+        return
 
     # メタラベルモデルの構築
     meta_label_model = build_meta_label_model(X_meta)
@@ -165,6 +169,6 @@ def train_meta_model():
     meta_label_model.save('./models/meta_label_model.h5')
 
 if __name__ == '__main__':
-    train()
-    # train_meta_model()
+    # train()
+    train_meta_model()
     # validate()

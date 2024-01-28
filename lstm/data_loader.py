@@ -4,7 +4,7 @@ from datetime import datetime
 
 def load_data():
     # JSONファイルからデータを読み込む
-    with open('lstm/historical/csv/historical_price.json', 'r') as file:
+    with open('lstm/historical/csv/historical_price_20230101.json', 'r') as file:
         data = json.load(file)
 
         # price_close, volume, dateをリストとして取得

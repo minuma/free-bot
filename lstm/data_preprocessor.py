@@ -14,11 +14,11 @@ def shape_data(df, timesteps=24, is_predict=False):
     df['Volume_Oscillator'] = calculate_volume_oscillator(df)
 
     # トリプルバリアの適用
-    df = set_triple_barrier(df, take_profit=0.01, stop_loss=-0.02, time_horizon=12)
+    df = set_triple_barrier(df, take_profit=0.05, stop_loss=-0.05, time_horizon=12)
     df.dropna(inplace=True)
 
     # 特徴量とラベルの定義
-    X = df[['price_close', 'MA_9', 'MA_100', 'divergence', 'max_divergence', 'MFI']].values
+    X = df[['price_close', 'MA_9', 'MA_100', 'divergence', 'max_divergence', 'VWAP', 'MFI']].values
     y = df['label'].values
     df.to_csv('./df.csv', index=False)
 
