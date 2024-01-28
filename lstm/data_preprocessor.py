@@ -12,16 +12,15 @@ def shape_data(df, timesteps=24, is_predict=False):
     df['VWAP'] = calculate_vwap(df)
     df['MFI'] = calculate_mfi(df)
     df['Volume_Oscillator'] = calculate_volume_oscillator(df)
-    
-    # シフトするタイムステップの設定（例：3ステップ先を予測）
-    shift_steps = 3
-    df['future_divergence'] = df['divergence'].shift(-shift_steps)
+
+    # トリプルバリアの適用
+    df = set_triple_barrier(df, take_profit=0.05, stop_loss=-0.1, time_horizon=12)
     df.dropna(inplace=True)
 
     # 特徴量とラベルの定義
     # TODO: OBVは値の変化量が大きすぎるため、学習には不適
     X = df[['price_close', 'MA_9', 'MA_100', 'divergence', 'max_divergence', 'VWAP', 'MFI', 'Volume_Oscillator']].values
-    y = df['future_divergence'].values
+    y = df['label'].values
     df.to_csv('./df.csv', index=False)
 
 
@@ -45,6 +44,30 @@ def shape_data(df, timesteps=24, is_predict=False):
     y_seq = np.array(y_seq) 
 
     return X_seq, y_seq
+
+def set_triple_barrier(df, take_profit, stop_loss, time_horizon):
+    # ラベル列の初期化
+    df['label'] = 0 
+
+    for index, row in df.iterrows():
+        # 上限バリア、下限バリア、時間バリアを設定
+        upper_barrier = row['price_close'] * (1 + take_profit)
+        lower_barrier = row['price_close'] * (1 + stop_loss)
+        end_time = min(index + time_horizon, len(df) - 1)
+
+        for future_index in range(index + 1, end_time + 1):
+            future_row = df.iloc[future_index]
+            if future_row['price_close'] >= upper_barrier:
+                df.at[index, 'label'] = 1  # 上限バリア達成
+                break
+            elif future_row['price_close'] <= lower_barrier:
+                df.at[index, 'label'] = -1  # 下限バリア達成
+                break
+        else:
+            # 時間バリア達成
+            df.at[index, 'label'] = 0
+
+    return df
 
 
 def calculate_divergence_max(df):
