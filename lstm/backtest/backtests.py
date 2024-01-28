@@ -13,78 +13,87 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'
 from lstm.data_loader import load_data
 from lstm.data_preprocessor import shape_data
 
+def generate_trade_signal(y_pred, meta_predictions):
+    signals = []
+    for pred, meta_pred in zip(y_pred, meta_predictions):
+        if meta_pred > 0.30:  # メタモデルが取引を示唆する場合
+            if pred[0] > pred[2]:  # 1次モデルが「買い」を示唆する場合
+                signals.append('buy')
+            elif pred[2] > pred[0]:  # 1次モデルが「売り」を示唆する場合
+                signals.append('sell')
+            else:
+                signals.append('hold')
+        else:
+            signals.append('hold')  # メタモデルが取引を示唆しない場合
+    return signals
 
-# データの読み込み
-with open('lstm/historical/csv/historical_price_20230601.json', 'r') as file:
-    data = json.load(file)
+def calculate_strategy_return(signals, market_returns):
+    strategy_returns = []
+    position = 0  # 現在のポジション（買い=1、売り=-1、ホールド=0）
 
-# Pandas DataFrameに変換
-df = pd.DataFrame(data['data'])
+    for signal, market_return in zip(signals, market_returns):
+        if signal == 'buy':
+            position = 1
+        elif signal == 'sell':
+            position = -1
+        else:
+            position = 0
 
-# 日付列をDatetime型に変換
-df['date_open'] = pd.to_datetime(df['date_open'])
-df['date_close'] = pd.to_datetime(df['date_close'])
+        # 戦略リターンは市場リターンとポジションに依存する
+        strategy_return = market_return * position
+        strategy_returns.append(strategy_return)
 
-# バックテストのロジック（ここでは単純な例を使用）
-# 例: 移動平均を基にシグナルを生成
-df_predict = load_data()
-X_seq, y_seq = shape_data(df_predict, is_predict=True)
-# 1次モデル（LSTM）のロード
-model = load_model('./models/lstm_model.h5')
-y_pred = model.predict(X_seq)
-
-# メタモデルのロード
-meta_model = load_model('./models/meta_label_model.h5')
-# メタモデルの適用
-selected_indices = (y_pred.flatten() > 0.5) | (y_pred.flatten() < -0.5)
-X_meta = X_seq[selected_indices]
-meta_predictions = meta_model.predict(X_meta)
-selected_indices = np.where((y_pred.flatten() > 0.5) | (y_pred.flatten() < -0.5))[0]
-
-
-# timestepsの値
-timesteps = 24  # shape_data関数に合わせて調整
-# dfをtimesteps分だけトリミング
-df_trimmed = df.iloc[timesteps:].copy()
-
-# y_predの長さをdf_trimmedに合わせる
-length_diff_y_pred = len(df_trimmed) - len(y_pred.flatten())
-adjusted_y_pred = np.concatenate([np.full(length_diff_y_pred, np.nan), y_pred.flatten()])
-
-# meta_predictionsの全時点に対する再配置
-adjusted_meta_pred = np.full(len(df_trimmed), np.nan)  # 全時点に対して初期化
-adjusted_meta_pred[selected_indices] = meta_predictions.flatten()  # 選択された時点にのみ予測値を配置
-
-# NaN値を含むadjusted_y_predを使用してsignal列を生成
-adjusted_y_pred = np.nan_to_num(adjusted_y_pred, nan=0)
-df_trimmed.loc[:, 'adjusted_y_pred'] = adjusted_y_pred
-df_trimmed['signal'] = np.where(
-    df_trimmed['adjusted_y_pred'] > 0.5, '買い',
-    np.where(df_trimmed['adjusted_y_pred'] < -0.5, '売り', 'アクションなし')
-)
+    return strategy_returns
 
 
-# メタモデルの予測に基づいてmeta_signal列を生成
-adjusted_meta_pred = np.nan_to_num(adjusted_meta_pred, nan=0)
-df_trimmed.loc[:, 'adjusted_meta_pred'] = adjusted_meta_pred
-df_trimmed.loc[:, 'meta_signal'] = np.where(df_trimmed['adjusted_meta_pred'] > 0.5, df_trimmed['signal'], 'アクションなし')
+if __name__ == '__main__':
+    # データの読み込み
+    with open('lstm/historical/csv/10m/historical_price_20230301.json', 'r') as file:
+        data = json.load(file)
 
-# 取引シミュレーション
-df_trimmed.loc[:, 'position'] = df_trimmed['meta_signal'].shift(1).replace({'買い': 1, '売り': -1, 'アクションなし': 0})
-df_trimmed.loc[:, 'market_return'] = df_trimmed['price_close'].pct_change()
-df_trimmed.loc[:, 'strategy_return'] = df_trimmed['market_return'] * df_trimmed['position']
+    # Pandas DataFrameに変換
+    df = pd.DataFrame(data['data'])
 
-# 累積リターンの計算
-df_trimmed.loc[:, 'cumulative_market_return'] = (1 + df_trimmed['market_return']).cumprod()
-df_trimmed.loc[:, 'cumulative_strategy_return'] = (1 + df_trimmed['strategy_return']).cumprod()
-df_trimmed.to_csv('backtest_result.csv', index=False)
+    # 日付列をDatetime型に変換
+    df['date_open'] = pd.to_datetime(df['date_open'])
+    df['date_close'] = pd.to_datetime(df['date_close'])
+    df['market_return'] = df['price_close'].pct_change()
+    df['market_return'].fillna(0, inplace=True)
 
-# 累積リターンのプロット
-plt.figure(figsize=(12, 6))
-plt.plot(df_trimmed['date_close'], df_trimmed['cumulative_market_return'], label='Market Return', color='red')
-plt.plot(df_trimmed['date_close'], df_trimmed['cumulative_strategy_return'], label='Strategy Return', color='blue')
-plt.legend()
-plt.xlabel('Date')
-plt.ylabel('Cumulative Return')
-plt.title('Backtest Result')
-plt.savefig('cumulative_return_plot.png')
+    # バックテストのロジック（ここでは単純な例を使用）
+    # 例: 移動平均を基にシグナルを生成
+    df_predict = load_data()
+    X_seq, y_seq = shape_data(df_predict, is_predict=True)
+    # 1次モデル（LSTM）のロード
+    model = load_model('./models/lstm_model.h5')
+    y_pred = model.predict(X_seq)
+
+    # メタモデルのロード
+    meta_model = load_model('./models/meta_label_model.h5')
+    # メタモデルの適用
+    meta_predictions = meta_model.predict(X_seq)
+
+    # 予測の結合（具体的なロジックは要調整）
+    truncated_df = df.iloc[:len(y_pred)]
+    truncated_df['meta_predictions'] = meta_predictions
+    truncated_df['trade_signal'] = generate_trade_signal(y_pred, meta_predictions) 
+
+    # 取引シグナルに基づいて戦略リターンを計算
+    truncated_df['strategy_return'] = calculate_strategy_return(truncated_df['trade_signal'], truncated_df['market_return']) 
+
+    # 累積リターンの計算
+    truncated_df['cumulative_market_return'] = (1 + truncated_df['market_return']).cumprod()
+    truncated_df['cumulative_strategy_return'] = (1 + truncated_df['strategy_return']).cumprod()
+
+    # 結果をCSVファイルに保存
+    truncated_df.to_csv('backtest_result.csv', index=False)
+
+    # 累積リターンのプロット
+    plt.figure(figsize=(12, 6))
+    plt.plot(truncated_df['date_close'], truncated_df['cumulative_market_return'], label='Market Return', color='red')
+    plt.plot(truncated_df['date_close'], truncated_df['cumulative_strategy_return'], label='Strategy Return', color='blue')
+    plt.legend()
+    plt.xlabel('Date')
+    plt.ylabel('Cumulative Return')
+    plt.title('Backtest Result')
+    plt.savefig('cumulative_return_plot.png')
