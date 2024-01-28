@@ -3,7 +3,7 @@
 """
 Python SDK is recommended as it has already implemented the authentication process for every API:
 """
-
+import pandas as pd
 import time
 import hashlib
 import hmac
@@ -85,8 +85,40 @@ def get_position_size():
 
     return r.json().get("size")
 
+def get_side_from_predictions():
+    df = pd.read_csv('./predictions.csv')
+    last_predicted_value = df['predicted_value'].iloc[-1]
+    if last_predicted_value > 0.5:
+        return "sell"
+    elif last_predicted_value < -0.5:
+        return "buy"
+    else:
+        return "hold"
 
 if __name__ == "__main__":
-    # print(get_position_size())
-    close_position()
-    # open_position("sell")
+    side = get_side_from_predictions()
+    if side == "hold":
+        print("hold")
+        exit()
+
+    now_position_size = get_position_size()
+    if side == "buy" and now_position_size > 0:
+        print("buy hold")
+        exit()
+    if side == "sell" and now_position_size < 0:
+        print("sell hold")
+        exit()
+
+    if side == "buy" and now_position_size < 0:
+        close_position()
+        time.sleep(1)
+        print("buy open")
+        open_position(side)
+        exit()
+    
+    if side == "sell" and now_position_size > 0:
+        close_position()
+        time.sleep(1)
+        print("sell open")
+        open_position(side)
+        exit()
