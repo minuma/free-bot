@@ -29,48 +29,58 @@ df['date_close'] = pd.to_datetime(df['date_close'])
 # 例: 移動平均を基にシグナルを生成
 df_predict = load_data()
 X_seq, y_seq = shape_data(df_predict, is_predict=True)
+# 1次モデル（LSTM）のロード
 model = load_model('./models/lstm_model.h5')
 y_pred = model.predict(X_seq)
+
+# メタモデルのロード
+meta_model = load_model('./models/meta_label_model.h5')
+# メタモデルの適用
+selected_indices = y_pred.flatten() > 0.5  # この閾値はシグナルの性質に応じて調整
+X_meta = X_seq[selected_indices]
+meta_predictions = meta_model.predict(X_meta)
 
 # timestepsの値
 timesteps = 24  # shape_data関数に合わせて調整
 # dfをtimesteps分だけトリミング
-df_trimmed = df.iloc[timesteps:]
+df_trimmed = df.iloc[timesteps:].copy()
 
-# 予測値をDataFrameに変換
-y_pred_df = pd.DataFrame(y_pred, columns=['predicted_value'])
-# df_trimmedとy_pred_dfの長さの差を計算
-length_diff = len(df_trimmed) - len(y_pred_df)
+# y_predの長さをdf_trimmedに合わせる
+length_diff_y_pred = len(df_trimmed) - len(y_pred.flatten())
+adjusted_y_pred = np.concatenate([np.full(length_diff_y_pred, np.nan), y_pred.flatten()])
 
-# y_pred_dfの先頭にNaN行を追加して長さを合わせる
-nan_rows = pd.DataFrame({'predicted_value': [np.nan] * length_diff})
-y_pred_df_extended = pd.concat([nan_rows, y_pred_df], ignore_index=True)
+# TODO: ここでメタモデルの予測を使用してsignal列を生成が、同じ行でないと意味がニア
+# meta_predictionsの長さをdf_trimmedに合わせる
+length_diff_meta = len(df_trimmed) - len(meta_predictions.flatten())
+adjusted_meta_pred = np.concatenate([np.full(length_diff_meta, np.nan), meta_predictions.flatten()])
 
-# df_trimmedに予測値を追加
-df_trimmed = df_trimmed.reset_index(drop=True)
-df_trimmed['predicted_value'] = y_pred_df_extended
+# NaN値を含むadjusted_y_predを使用してsignal列を生成
+adjusted_y_pred = np.nan_to_num(adjusted_y_pred, nan=-1)
+df_trimmed.loc[:, 'adjusted_y_pred'] = adjusted_y_pred
+df_trimmed.loc[:, 'signal'] = np.where(df_trimmed['adjusted_y_pred'] > 0.5, '買い', '売り')
 
-# バックテストのロジック
-df_trimmed['signal'] = df_trimmed['predicted_value'].diff().apply(
-    lambda x: '買い' if x > 0 else ('売り' if x < 0 else 'アクションなし')
-)
 
-df_trimmed.to_csv('backtest.csv')
+# メタモデルの予測に基づいてmeta_signal列を生成
+adjusted_meta_pred = np.nan_to_num(adjusted_meta_pred, nan=-1)
+df_trimmed.loc[:, 'adjusted_meta_pred'] = adjusted_meta_pred
+df_trimmed.loc[:, 'meta_signal'] = np.where(df_trimmed['adjusted_meta_pred'] > 0.5, df_trimmed['signal'], 'アクションなし')
 
 # 取引シミュレーション
-df_trimmed['position'] = df_trimmed['signal'].shift(1)
-df_trimmed['market_return'] = df_trimmed['price_close'].pct_change()
-df_trimmed['strategy_return'] = df_trimmed['market_return'] * df_trimmed['position'].apply(
-    lambda x: 1 if x == '買い' else (-1 if x == '売り' else 0)
-)
+df_trimmed.loc[:, 'position'] = df_trimmed['meta_signal'].shift(1).replace({'買い': 1, '売り': -1, 'アクションなし': 0})
+df_trimmed.loc[:, 'market_return'] = df_trimmed['price_close'].pct_change()
+df_trimmed.loc[:, 'strategy_return'] = df_trimmed['market_return'] * df_trimmed['position']
 
 # 累積リターンの計算
-df_trimmed['cumulative_market_return'] = (1 + df_trimmed['market_return']).cumprod()
-df_trimmed['cumulative_strategy_return'] = (1 + df_trimmed['strategy_return']).cumprod()
+df_trimmed.loc[:, 'cumulative_market_return'] = (1 + df_trimmed['market_return']).cumprod()
+df_trimmed.loc[:, 'cumulative_strategy_return'] = (1 + df_trimmed['strategy_return']).cumprod()
+df_trimmed.to_csv('backtest_result.csv', index=False)
 
 # 累積リターンのプロット
 plt.figure(figsize=(12, 6))
-plt.plot(df_trimmed['cumulative_market_return'], label='market return', color='red')
-plt.plot(df_trimmed['cumulative_strategy_return'], label='strategy return', color='blue')
+plt.plot(df_trimmed['date_close'], df_trimmed['cumulative_market_return'], label='Market Return', color='red')
+plt.plot(df_trimmed['date_close'], df_trimmed['cumulative_strategy_return'], label='Strategy Return', color='blue')
 plt.legend()
+plt.xlabel('Date')
+plt.ylabel('Cumulative Return')
+plt.title('Backtest Result')
 plt.savefig('cumulative_return_plot.png')
