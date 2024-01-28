@@ -2,6 +2,8 @@ import numpy as np
 import joblib
 # from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import RobustScaler
+import pandas as pd
+
 
 
 def shape_data(df, timesteps=24, is_predict=False):
@@ -24,9 +26,15 @@ def shape_data(df, timesteps=24, is_predict=False):
         df[f'diff_{col}'] = df[col].diff()
     df.dropna(inplace=True)
 
+    # 指定された列について異常値を検出し、置き換え
+    columns = ['diff_price_close', 'diff_MA_9', 'diff_divergence', 'max_divergence', 'VWAP', 'MFI', 'OBV']
+    for col in columns:
+        replace_outliers_with_median(df, col)
+
     # 特徴量とラベルの定義
-    X = df[['diff_price_close', 'diff_MA_9', 'diff_divergence', 'max_divergence', 'VWAP', 'MFI', 'OBV']].values
-    y = df['label'].values
+    X = df[columns].values
+    # 仮定: df['label']には3つのクラスが含まれている（例えば、-1, 0, 1）
+    y = pd.get_dummies(df['label']).values
     df.to_csv('./df.csv', index=False)
 
 
@@ -50,6 +58,13 @@ def shape_data(df, timesteps=24, is_predict=False):
     y_seq = np.array(y_seq) 
 
     return X_seq, y_seq
+
+def replace_outliers_with_median(df, col):
+    Q1 = df[col].quantile(0.05)
+    Q3 = df[col].quantile(0.95)
+    median = df[col].median()
+
+    df[col] = np.where((df[col] < Q1) | (df[col] > Q3), median, df[col])
 
 def set_triple_barrier(df, take_profit, stop_loss, time_horizon):
     # ラベル列の初期化

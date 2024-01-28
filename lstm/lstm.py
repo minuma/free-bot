@@ -17,11 +17,9 @@ def train():
     # モデルの構築
     model = build_model(X_seq)
 
-    # 分割の割合を定義
-    train_size = int(len(X_seq) * 0.8)
-    # 訓練データと検証データに分割
-    X_train, X_val = X_seq[:train_size], X_seq[train_size:]
-    y_train, y_val = y_seq[:train_size], y_seq[train_size:]
+    df_val = load_data(is_validation=True)
+    X_seq_val, y_seq_val = shape_data(df_val, is_predict=False)
+
 
     # 早期停止の設定
     early_stopping = EarlyStopping(
@@ -31,7 +29,7 @@ def train():
     )
 
     # モデルの訓練（検証セットを含む）
-    model.fit(X_train, y_train, validation_data=(X_val, y_val), epochs=20, callbacks=[early_stopping])
+    model.fit(X_seq, y_seq, validation_data=(X_seq_val, y_seq_val), epochs=20, callbacks=[early_stopping])
 
     # モデルの保存
     model.save('./models/lstm_model.h5')
@@ -44,21 +42,21 @@ def build_model(X_seq):
     model = Sequential()
 
     # LSTM層のサイズと数を調整
-    model.add(LSTM(32, return_sequences=True, input_shape=(X_seq.shape[1], X_seq.shape[2])))
-    model.add(Dropout(0.2))
+    model.add(LSTM(128, return_sequences=True, input_shape=(X_seq.shape[1], X_seq.shape[2])))
+    model.add(Dropout(0.1))
     model.add(LSTM(32, return_sequences=False))
-    model.add(Dropout(0.2))
+    model.add(Dropout(0.1))
 
     # 中間層
     model.add(Dense(16, activation='relu'))
 
-    # 出力層にtanh活性化関数を使用
-    model.add(Dense(1, activation='tanh'))
+    # 出力層（3クラスの予測）
+    model.add(Dense(3, activation='softmax'))
 
-    # 損失関数をmean_absolute_errorに変更、最適化アルゴリズムをAdamに
-    model.compile(loss='mean_absolute_error',
+    # 多クラス分類の損失関数と評価指標
+    model.compile(loss='categorical_crossentropy',
                   optimizer=Adam(learning_rate=0.001),
-                  metrics=['mean_squared_error'])
+                  metrics=['accuracy'])
 
     return model
 
@@ -85,7 +83,7 @@ def validate_model(X_test, y_test):
 
     # y_predをNumPy配列からDataFrameに変換
     df = pd.read_csv('df.csv')
-    y_pred_df = pd.DataFrame(y_pred, columns=['y_pred'])
+    y_pred_df = pd.DataFrame(y_pred, columns=['y_pred', 'y_pred_0', 'y_pred_1'])
 
     # df.csvの下からy_pred_dfの行数分のdate_closeを取得
     date_close = df['date_close'].iloc[-len(y_pred_df):]

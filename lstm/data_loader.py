@@ -2,9 +2,12 @@ import pandas as pd
 import json
 from datetime import datetime
 
-def load_data():
+def load_data(is_validation=False):
+    file_path = './lstm/historical/csv/2h/historical_price_20230101.json'
+    if is_validation:
+        file_path = './lstm/historical/csv/2h/historical_price_20230801.json'
     # JSONファイルからデータを読み込む
-    with open('lstm/historical/csv/2h/historical_price_20230101.json', 'r') as file:
+    with open(file_path, 'r') as file:
         data = json.load(file)
 
         # price_close, volume, dateをリストとして取得
