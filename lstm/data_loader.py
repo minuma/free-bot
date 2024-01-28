@@ -3,7 +3,7 @@ import json
 from datetime import datetime
 
 def load_data(is_validation=False):
-    file_path = './lstm/historical/csv/10m/historical_price_20230101.json'
+    file_path = './lstm/historical/csv/10m/historical_price_20231201.json'
     if is_validation:
         file_path = './lstm/historical/csv/historical_price.json'
     # JSONファイルからデータを読み込む
@@ -23,6 +23,6 @@ def load_data(is_validation=False):
         })
 
         # date_closeをDateTime型に変換
-        df['date_close'] = pd.to_datetime(df['date_close']).dt.tz_convert('Asia/Tokyo')
+        df['date_close'] = pd.to_datetime(df['date_close']) + pd.Timedelta(hours=9)
 
     return df
