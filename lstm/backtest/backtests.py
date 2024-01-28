@@ -36,9 +36,11 @@ y_pred = model.predict(X_seq)
 # メタモデルのロード
 meta_model = load_model('./models/meta_label_model.h5')
 # メタモデルの適用
-selected_indices = y_pred.flatten() > 0.5  # この閾値はシグナルの性質に応じて調整
+selected_indices = (y_pred.flatten() > 0.5) | (y_pred.flatten() < -0.5)
 X_meta = X_seq[selected_indices]
 meta_predictions = meta_model.predict(X_meta)
+selected_indices = np.where((y_pred.flatten() > 0.5) | (y_pred.flatten() < -0.5))[0]
+
 
 # timestepsの値
 timesteps = 24  # shape_data関数に合わせて調整
@@ -49,19 +51,18 @@ df_trimmed = df.iloc[timesteps:].copy()
 length_diff_y_pred = len(df_trimmed) - len(y_pred.flatten())
 adjusted_y_pred = np.concatenate([np.full(length_diff_y_pred, np.nan), y_pred.flatten()])
 
-# TODO: ここでメタモデルの予測を使用してsignal列を生成が、同じ行でないと意味がニア
-# meta_predictionsの長さをdf_trimmedに合わせる
-length_diff_meta = len(df_trimmed) - len(meta_predictions.flatten())
-adjusted_meta_pred = np.concatenate([np.full(length_diff_meta, np.nan), meta_predictions.flatten()])
+# meta_predictionsの全時点に対する再配置
+adjusted_meta_pred = np.full(len(df_trimmed), np.nan)  # 全時点に対して初期化
+adjusted_meta_pred[selected_indices] = meta_predictions.flatten()  # 選択された時点にのみ予測値を配置
 
 # NaN値を含むadjusted_y_predを使用してsignal列を生成
-adjusted_y_pred = np.nan_to_num(adjusted_y_pred, nan=-1)
+adjusted_y_pred = np.nan_to_num(adjusted_y_pred, nan=0)
 df_trimmed.loc[:, 'adjusted_y_pred'] = adjusted_y_pred
 df_trimmed.loc[:, 'signal'] = np.where(df_trimmed['adjusted_y_pred'] > 0.5, '買い', '売り')
 
 
 # メタモデルの予測に基づいてmeta_signal列を生成
-adjusted_meta_pred = np.nan_to_num(adjusted_meta_pred, nan=-1)
+adjusted_meta_pred = np.nan_to_num(adjusted_meta_pred, nan=0)
 df_trimmed.loc[:, 'adjusted_meta_pred'] = adjusted_meta_pred
 df_trimmed.loc[:, 'meta_signal'] = np.where(df_trimmed['adjusted_meta_pred'] > 0.5, df_trimmed['signal'], 'アクションなし')
 

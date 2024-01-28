@@ -10,5 +10,5 @@ df = pd.read_csv('./df.csv')
 correlation_matrix = df.corr()
 
 # 目的変数との相関を表示
-correlation_with_target = correlation_matrix['future_divergence']
+correlation_with_target = correlation_matrix['label']
 print(correlation_with_target)

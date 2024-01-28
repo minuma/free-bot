@@ -24,7 +24,11 @@ def train():
     y_train, y_val = y_seq[:train_size], y_seq[train_size:]
 
     # 早期停止の設定
-    early_stopping = EarlyStopping(monitor='val_loss', patience=5)
+    early_stopping = EarlyStopping(
+        monitor='val_loss',
+        patience=5,
+        restore_best_weights=True  # 最も良いモデルの重みを復元
+    )
 
     # モデルの訓練（検証セットを含む）
     model.fit(X_train, y_train, validation_data=(X_val, y_val), epochs=20, callbacks=[early_stopping])
@@ -32,23 +36,32 @@ def train():
     # モデルの保存
     model.save('./models/lstm_model.h5')
 
-def build_model(X_seq):
-    # LSTMモデルの構築
-    model = Sequential()
-    model.add(LSTM(128, return_sequences=True, input_shape=(X_seq.shape[1], X_seq.shape[2])))
-    model.add(Dropout(0.2))
-    model.add(LSTM(64, return_sequences=False))
-    model.add(Dropout(0.2))
-    model.add(Dense(16, activation='relu'))
-    # 回帰問題用の出力層
-    model.add(Dense(1, activation='linear'))
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import LSTM, Dropout, Dense
+from tensorflow.keras.optimizers import Adam
 
-    # 損失関数と評価指標の変更
-    model.compile(loss='mean_squared_error',
-                  optimizer='adam',
+def build_model(X_seq):
+    model = Sequential()
+
+    # LSTM層のサイズと数を調整
+    model.add(LSTM(64, return_sequences=True, input_shape=(X_seq.shape[1], X_seq.shape[2])))
+    model.add(Dropout(0.3))
+    model.add(LSTM(32, return_sequences=False))
+    model.add(Dropout(0.3))
+
+    # 中間層
+    model.add(Dense(16, activation='relu'))
+
+    # 出力層にtanh活性化関数を使用
+    model.add(Dense(1, activation='tanh'))
+
+    # 損失関数をmean_absolute_errorに変更、最適化アルゴリズムをAdamに
+    model.compile(loss='mean_absolute_error',
+                  optimizer=Adam(learning_rate=0.001),
                   metrics=['mean_squared_error'])
 
     return model
+
 
 from tensorflow.keras.models import load_model
 from sklearn.metrics import mean_squared_error, mean_absolute_error
@@ -95,8 +108,11 @@ def filter_data_for_meta_labeling(X, y, model):
     # モデルで予測
     y_pred = model.predict(X)
 
-    # フィルタリング条件（例: ラベル1の場合のみを選択）
-    selected_indices = np.where(y_pred > 0.5)[0]  # 0.5は閾値
+    # フィルタリング条件の変更（ラベル1とラベル-1の両方を選択）
+    selected_indices = np.where((y_pred > 0.5) | (y_pred < -0.5))[0]  # 閾値を調整
+    if selected_indices.size == 0:
+        print('No data selected for meta labeling!!!!!')
+        return None, None
 
     return X[selected_indices], y[selected_indices]
 
@@ -119,7 +135,7 @@ def build_meta_label_model(X):
 # メイン処理
 def train_meta_model():
     df = load_data()
-    X_seq, y_seq = shape_data(df, is_predict=False)
+    X_seq, y_seq = shape_data(df, is_predict=True)
 
     # 既存のLSTMモデルのロード
     lstm_model = load_model('./models/lstm_model.h5')
@@ -136,7 +152,11 @@ def train_meta_model():
     y_train, y_val = y_meta[:train_size], y_meta[train_size:]
 
     # 早期停止の設定
-    early_stopping = EarlyStopping(monitor='val_loss', patience=5)
+    early_stopping = EarlyStopping(
+        monitor='val_loss',
+        patience=5,
+        restore_best_weights=True  # 最も良いモデルの重みを復元
+    )
 
     # メタラベルモデルの訓練
     meta_label_model.fit(X_train, y_train, validation_data=(X_val, y_val), epochs=20, callbacks=[early_stopping])
@@ -145,6 +165,6 @@ def train_meta_model():
     meta_label_model.save('./models/meta_label_model.h5')
 
 if __name__ == '__main__':
-    # train()
-    train_meta_model()
+    train()
+    # train_meta_model()
     # validate()
