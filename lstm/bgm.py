@@ -59,3 +59,6 @@ gbm = lgb.train(
 
 # テストデータに対する予測
 y_pred = gbm.predict(X_test, num_iteration=gbm.best_iteration)
+
+gbm.save_model('./models/bgm/lightgbm_model.txt')
+
