@@ -18,7 +18,7 @@ def shape_data(df, timesteps=24, is_predict=False):
     df['Volume_Oscillator'] = calculate_volume_oscillator(df)
 
     # トリプルバリアの適用
-    df = set_triple_barrier(df, take_profit=0.05, stop_loss=-0.05, time_horizon=12)
+    df = set_triple_barrier(df, take_profit=0.05, stop_loss=-0.05, time_horizon=4)
 
     # 差分の計算
     columns_to_diff = ['price_close', 'MA_9', 'MA_100', 'divergence', 'max_divergence', 'VWAP', 'MFI']
@@ -27,7 +27,7 @@ def shape_data(df, timesteps=24, is_predict=False):
     df.dropna(inplace=True)
 
     # 指定された列について異常値を検出し、置き換え
-    columns = ['diff_price_close', 'diff_MA_9', 'diff_divergence', 'max_divergence', 'VWAP', 'MFI', 'OBV']
+    columns = ['MA_100', 'price_close', 'MA_9', 'VWAP', 'divergence']
     for col in columns:
         replace_outliers_with_median(df, col)
 
@@ -87,6 +87,16 @@ def set_triple_barrier(df, take_profit, stop_loss, time_horizon):
         else:
             # 時間バリア達成
             df.at[index, 'label'] = 0
+
+    # label=0の割合を計算
+    label_0_percentage = (df['label'] == 0).mean()
+
+    # 割合が50%以上であるかどうかを判定
+    if label_0_percentage > 0.5:
+        print("====================================")
+        print("label=0の割合が50%を超えています。")
+    else:
+        print("label=0の割合が50%を超えていません。")
 
     return df
 
