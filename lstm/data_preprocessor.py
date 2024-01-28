@@ -6,7 +6,7 @@ import pandas as pd
 
 
 
-def shape_data(df, timesteps=24, is_predict=False):
+def shape_data(df, timesteps=20, is_predict=False):
     # 移動平均、乖離度などの特徴量の計算
     df['MA_9'] = df['price_close'].rolling(window=9).mean()
     df['MA_100'] = df['price_close'].rolling(window=100).mean()
@@ -18,16 +18,16 @@ def shape_data(df, timesteps=24, is_predict=False):
     df['Volume_Oscillator'] = calculate_volume_oscillator(df)
 
     # トリプルバリアの適用
-    df = set_triple_barrier(df, take_profit=0.03, stop_loss=-0.03, time_horizon=15)
+    df = set_triple_barrier(df, take_profit=0.01, stop_loss=-0.01, time_horizon=20)
 
     # 差分の計算
-    columns_to_diff = ['price_close', 'MA_9', 'MA_100', 'divergence', 'max_divergence', 'VWAP', 'MFI']
+    columns_to_diff = ['price_close', 'MA_9', 'MA_100', 'OBV', 'diff_MA_100', 'VWAP', 'divergence']
     for col in columns_to_diff:
         df[f'diff_{col}'] = df[col].diff()
     df.dropna(inplace=True)
 
     # 指定された列について異常値を検出し、置き換え
-    columns = ['MA_100', 'price_close', 'MA_9', 'VWAP', 'divergence']
+    columns = ['MA_100', 'price_close', 'MA_9', 'VWAP', 'divergence', 'max_divergence', 'OBV', 'MFI', 'Volume_Oscillator']
     for col in columns:
         replace_outliers_with_median(df, col)
 

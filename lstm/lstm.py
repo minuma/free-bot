@@ -24,12 +24,12 @@ def train():
     # 早期停止の設定
     early_stopping = EarlyStopping(
         monitor='val_loss',
-        patience=5,
+        patience=1,
         restore_best_weights=True  # 最も良いモデルの重みを復元
     )
 
     # モデルの訓練（検証セットを含む）
-    model.fit(X_seq, y_seq, validation_data=(X_seq_val, y_seq_val), epochs=20, callbacks=[early_stopping])
+    model.fit(X_seq, y_seq, validation_data=(X_seq_val, y_seq_val), epochs=1, callbacks=[early_stopping])
 
     # モデルの保存
     model.save('./models/lstm_model.h5')
@@ -42,9 +42,9 @@ def build_model(X_seq):
     model = Sequential()
 
     # LSTM層のサイズと数を調整
-    model.add(LSTM(128, return_sequences=True, input_shape=(X_seq.shape[1], X_seq.shape[2])))
+    model.add(LSTM(32, return_sequences=True, input_shape=(X_seq.shape[1], X_seq.shape[2])))
     model.add(Dropout(0.1))
-    model.add(LSTM(32, return_sequences=False))
+    model.add(LSTM(16, return_sequences=False))
     model.add(Dropout(0.1))
 
     # 中間層
@@ -106,9 +106,11 @@ def filter_data_for_meta_labeling(X, y, model):
     # モデルで予測
     y_pred = model.predict(X)
 
-    # フィルタリング条件の変更（ラベル1とラベル-1の両方を選択）
-    selected_indices = np.where((y_pred > 0.5) | (y_pred < -0.5))[0]  # 閾値を調整
-    if selected_indices.size == 0:
+    # 各サンプルの特定のクラスの確率を確認
+    # ここではクラス1の確率が y_pred[:, 0]、クラス3の確率が y_pred[:, 2] とします
+    selected_indices = np.where((y_pred[:, 0] > 0.4) | (y_pred[:, 2] > 0.4))
+
+    if selected_indices[0].size == 0:
         print('No data selected for meta labeling!!!!!')
         y_pred_df = pd.DataFrame({'predicted_values': y_pred.flatten()})
         y_pred_df.to_csv('predicted_values.csv', index=False)
@@ -132,6 +134,19 @@ def build_meta_label_model(X):
 
     return model
 
+def prepare_meta_labels(df, x_seq, model):
+    # モデルで予測
+    y_pred = model.predict(x_seq)
+
+    # dfの先頭をy_predの長さに合わせて切り捨てる
+    truncated_df = df.iloc[:len(y_pred)]
+
+    # 成功の条件に基づいてラベルを生成
+    success_labels = ((truncated_df['label'] == 1) & (y_pred[:, 0] >= 0.33)) | ((truncated_df['label'] == -1) & (y_pred[:, 2] >= 0.33))
+    labels = success_labels.astype(int)  # ブール値を整数に変換
+
+    return labels
+
 # メイン処理
 def train_meta_model():
     df = load_data()
@@ -141,17 +156,22 @@ def train_meta_model():
     lstm_model = load_model('./models/lstm_model.h5')
 
     # メタラベリングのためのデータフィルタリング
-    X_meta, y_meta = filter_data_for_meta_labeling(X_seq, y_seq, lstm_model)
-    if X_meta is None or y_meta is None:
-        return
+    # TODO: 頑張ってyを２値にしないといけない
+    df = pd.read_csv('./df.csv')
+    y = prepare_meta_labels(df, X_seq, lstm_model)
+
+    # X_meta, y_meta = filter_data_for_meta_labeling(X_seq, y_seq, lstm_model)
+    # if X_meta is None or y_meta is None:
+    #     return
+    
 
     # メタラベルモデルの構築
-    meta_label_model = build_meta_label_model(X_meta)
+    meta_label_model = build_meta_label_model(X_seq)
 
     # 分割の割合を定義
-    train_size = int(len(X_meta) * 0.8)
-    X_train, X_val = X_meta[:train_size], X_meta[train_size:]
-    y_train, y_val = y_meta[:train_size], y_meta[train_size:]
+    train_size = int(len(X_seq) * 0.8)
+    X_train, X_val = X_seq[:train_size], X_seq[train_size:]
+    y_train, y_val = y[:train_size], y[train_size:]
 
     # 早期停止の設定
     early_stopping = EarlyStopping(
@@ -161,12 +181,12 @@ def train_meta_model():
     )
 
     # メタラベルモデルの訓練
-    meta_label_model.fit(X_train, y_train, validation_data=(X_val, y_val), epochs=20, callbacks=[early_stopping])
+    meta_label_model.fit(X_train, y_train, validation_data=(X_val, y_val), epochs=1, callbacks=[early_stopping])
 
     # モデルの保存
     meta_label_model.save('./models/meta_label_model.h5')
 
 if __name__ == '__main__':
-    train()
-    # train_meta_model()
+    # train()
+    train_meta_model()
     # validate()
