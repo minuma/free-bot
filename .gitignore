@@ -5,3 +5,4 @@
 *.joblib
 *.png
 /lightgbm_model.txt
+result.txt
