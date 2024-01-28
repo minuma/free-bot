@@ -18,7 +18,7 @@ def shape_data(df, timesteps=24, is_predict=False):
     df['Volume_Oscillator'] = calculate_volume_oscillator(df)
 
     # トリプルバリアの適用
-    df = set_triple_barrier(df, take_profit=0.05, stop_loss=-0.05, time_horizon=4)
+    df = set_triple_barrier(df, take_profit=0.03, stop_loss=-0.03, time_horizon=15)
 
     # 差分の計算
     columns_to_diff = ['price_close', 'MA_9', 'MA_100', 'divergence', 'max_divergence', 'VWAP', 'MFI']
@@ -92,11 +92,13 @@ def set_triple_barrier(df, take_profit, stop_loss, time_horizon):
     label_0_percentage = (df['label'] == 0).mean()
 
     # 割合が50%以上であるかどうかを判定
-    if label_0_percentage > 0.5:
-        print("====================================")
-        print("label=0の割合が50%を超えています。")
+    print("====================================")
+    if label_0_percentage > 0.9:
+        print(f"label=0の割合: {label_0_percentage * 100:.2f}%")
+        print("label=0の割合が90%を超えています。")
     else:
-        print("label=0の割合が50%を超えていません。")
+        print(f"label=0の割合: {label_0_percentage * 100:.2f}%")
+        print("label=0の割合が90%を超えていません。")
 
     return df
 
