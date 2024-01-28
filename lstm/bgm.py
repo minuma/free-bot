@@ -10,9 +10,10 @@ data = load_data()
 
 # 特徴量とターゲットの定義
 # 例: 'close' をターゲットとする場合
-y = data['price_close']
-X = data.drop(['price_close'], axis=1) # 'close' 以外の列を特徴量とする
-X = data.drop(['date_close'], axis=1) # 'close' 以外の列を特徴量とする
+df = shape_data(data, is_df=True)
+y = df['label']
+X = df.drop(['label'], axis=1) # 'close' 以外の列を特徴量とする
+X = df.drop(['date_close'], axis=1) # 'close' 以外の列を特徴量とする
 
 # データをトレーニングセットとテストセットに分割
 train_size = int(len(data) * 0.8)

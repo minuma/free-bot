@@ -6,7 +6,7 @@ import pandas as pd
 
 
 
-def shape_data(df, timesteps=20, is_predict=False):
+def shape_data(df, timesteps=20, is_predict=False, is_df=False):
     # 移動平均、乖離度などの特徴量の計算
     df['MA_9'] = df['price_close'].rolling(window=9).mean()
     df['MA_100'] = df['price_close'].rolling(window=100).mean()
@@ -31,12 +31,14 @@ def shape_data(df, timesteps=20, is_predict=False):
     for col in columns:
         replace_outliers_with_median(df, col)
 
+    df.to_csv('./df.csv', index=False)
+    if is_df:
+        return df.copy()
+
     # 特徴量とラベルの定義
     X = df[columns].values
     # 仮定: df['label']には3つのクラスが含まれている（例えば、-1, 0, 1）
     y = pd.get_dummies(df['label']).values
-    df.to_csv('./df.csv', index=False)
-
 
     # データのスケーリング
     scaler_file = './models/scaler.joblib'
