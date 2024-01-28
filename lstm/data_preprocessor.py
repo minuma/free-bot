@@ -1,6 +1,8 @@
 import numpy as np
 import joblib
-from sklearn.preprocessing import StandardScaler
+# from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import RobustScaler
+
 
 def shape_data(df, timesteps=24, is_predict=False):
     # 移動平均、乖離度などの特徴量の計算
@@ -15,10 +17,15 @@ def shape_data(df, timesteps=24, is_predict=False):
 
     # トリプルバリアの適用
     df = set_triple_barrier(df, take_profit=0.05, stop_loss=-0.05, time_horizon=12)
+
+    # 差分の計算
+    columns_to_diff = ['price_close', 'MA_9', 'MA_100', 'divergence', 'max_divergence', 'VWAP', 'MFI']
+    for col in columns_to_diff:
+        df[f'diff_{col}'] = df[col].diff()
     df.dropna(inplace=True)
 
     # 特徴量とラベルの定義
-    X = df[['price_close', 'MA_9', 'MA_100', 'divergence', 'max_divergence', 'VWAP', 'MFI']].values
+    X = df[['diff_price_close', 'diff_MA_9', 'diff_divergence', 'max_divergence', 'VWAP', 'MFI', 'OBV']].values
     y = df['label'].values
     df.to_csv('./df.csv', index=False)
 
@@ -26,7 +33,7 @@ def shape_data(df, timesteps=24, is_predict=False):
     # データのスケーリング
     scaler_file = './models/scaler.joblib'
     if not is_predict:
-        scaler = StandardScaler()
+        scaler = RobustScaler()
         X_scaled = scaler.fit_transform(X)
         joblib.dump(scaler, scaler_file)
     else:

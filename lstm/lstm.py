@@ -53,7 +53,7 @@ def build_model(X_seq):
     model.add(Dense(16, activation='relu'))
 
     # 出力層にtanh活性化関数を使用
-    model.add(Dense(2, activation='tanh'))
+    model.add(Dense(1, activation='tanh'))
 
     # 損失関数をmean_absolute_errorに変更、最適化アルゴリズムをAdamに
     model.compile(loss='mean_absolute_error',
@@ -169,6 +169,6 @@ def train_meta_model():
     meta_label_model.save('./models/meta_label_model.h5')
 
 if __name__ == '__main__':
-    # train()
-    train_meta_model()
+    train()
+    # train_meta_model()
     # validate()
