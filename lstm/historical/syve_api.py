@@ -2,7 +2,7 @@ import requests
 import json
 from dotenv import load_dotenv
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from dateutil.relativedelta import relativedelta
 
 load_dotenv()
@@ -15,17 +15,20 @@ class SyveApi:
         self.pool_address = pool_address
 
     def get_historical_price(self):
-        date_str = "2024-01-25:00:00Z"
-        # datetimeオブジェクトに変換
-        date_obj = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
-        # UTCタイムゾーンを設定
-        date_obj = date_obj.replace(tzinfo=timezone.utc)
-        # half_year_later = date_obj + relativedelta(months=6)
+        # date_str = "2024-01-25:00:00Z"
+        # # datetimeオブジェクトに変換
+        # date_obj = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
+        # # UTCタイムゾーンを設定
+        # date_obj = date_obj.replace(tzinfo=timezone.utc)
+        # # Unixタイムスタンプに変換
+        # from_timestamp = int(date_obj.timestamp())
 
+        # 現在の日時を取得
+        now = datetime.now(timezone.utc)
+        # 2日前の日時を計算
+        three_days_ago = now - timedelta(days=2)
         # Unixタイムスタンプに変換
-        from_timestamp = int(date_obj.timestamp())
-        # until_timestamp = int(date_obj.timestamp())
-
+        from_timestamp = int(three_days_ago.timestamp())
 
         params = {
             'token_address': self.token_address,

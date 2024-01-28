@@ -71,7 +71,22 @@ def open_position(side="buy"):
     r = requests.request('POST', host + prefix + url, headers=headers, data=body)
     print(r.json())
 
+def get_position_size():
+    host = "https://api.gateio.ws"
+    prefix = "/api/v4"
+    headers = {'Accept': 'application/json', 'Content-Type': 'application/json'}
+
+    url = '/futures/usdt/positions/MATIC_USDT'
+    query_param = ''
+    # for `gen_sign` implementation, refer to section `Authentication` above
+    sign_headers = gen_sign('GET', prefix + url, query_param)
+    headers.update(sign_headers)
+    r = requests.request('GET', host + prefix + url, headers=headers)
+
+    return r.json().get("size")
+
 
 if __name__ == "__main__":
+    # print(get_position_size())
     close_position()
     # open_position("sell")
