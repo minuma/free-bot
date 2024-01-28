@@ -4,3 +4,4 @@
 *.json
 *.joblib
 *.png
+/lightgbm_model.txt
