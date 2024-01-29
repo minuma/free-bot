@@ -19,7 +19,7 @@ def shape_data(df, timesteps=20, is_predict=False, is_gbm=False):
 
     # トリプルバリアの適用
     if is_gbm:
-        df = set_labels_based_on_past_data(df, look_back_period=3, ptSl=0.002)
+        df = set_labels_based_on_past_data(df, look_back_period=10, ptSl=0.01)
     else:
         df = set_triple_barrier(df, take_profit=0.01, stop_loss=-0.01, time_horizon=20)
 
@@ -108,30 +108,31 @@ def set_triple_barrier(df, take_profit, stop_loss, time_horizon):
     return df
 
 def set_labels_based_on_past_data(df, look_back_period, ptSl):
-    df['label'] = 0
+    df['label'] = 1  # 初期値を設定（-1は未定義を意味する）
 
     for index in range(look_back_period, len(df)):
-        past_data = df.iloc[index - look_back_period:index]
-        current_price = df.iloc[index]['price_close']
-
-        # 過去の最高価格と最低価格を計算
-        max_past_price = past_data['price_close'].max()
-        min_past_price = past_data['price_close'].min()
+        # look_back_period前の価格を基準価格とする
+        base_price = df.iloc[index - look_back_period]['price_close']
 
         # 利益確定（Take Profit）と損切り（Stop Loss）の閾値を設定
-        take_profit_threshold = max_past_price * (1 + ptSl)
-        stop_loss_threshold = min_past_price * (1 - ptSl)
+        take_profit_threshold = base_price * (1 + ptSl)
+        stop_loss_threshold = base_price * (1 - ptSl)
 
-        # 現在価格が過去の最高価格に対する利益確定閾値を超えるか、
-        # 過去の最低価格に対する損切り閾値を下回るかをチェック
-        if current_price > take_profit_threshold:
-            df.at[index, 'label'] = 2  # 利益確定の条件を満たす
-        elif current_price < stop_loss_threshold:
-            df.at[index, 'label'] = 0  # 損切りの条件を満たす
+        # 現在から過去look_back_period間のデータで利益確定や損切りが発生したか確認
+        for past_index in range(index - look_back_period + 1, index + 1):
+            past_price = df.iloc[past_index]['price_close']
+
+            if past_price >= take_profit_threshold:
+                df.at[index, 'label'] = 2  # 利益確定の条件を満たす
+                break
+            elif past_price <= stop_loss_threshold:
+                df.at[index, 'label'] = 0  # 損切りの条件を満たす
+                break
         else:
-            df.at[index, 'label'] = 1  # その他
+            df.at[index, 'label'] = 1  # その他（利益確定や損切りの条件を満たさない）
 
     return df
+
 
 
 

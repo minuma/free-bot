@@ -32,31 +32,29 @@ def set_triple_barrier(df, take_profit, stop_loss, time_horizon):
 
     return label_0_percentage
 
-def set_labels_based_on_past_data(df, ptSl, look_back_period):
-    df['label'] = 0
+def set_labels_based_on_past_data(df, look_back_period, ptSl):
+    df['label'] = 1  # 初期値を設定（-1は未定義を意味する）
 
     label_values = []  # ラベルを格納するリストを初期化
     label_values = [-1] * look_back_period
-
     for index in range(look_back_period, len(df)):
-        past_data = df.iloc[index - look_back_period:index]
-        current_price = df.iloc[index]['price_close']
-
-        # 過去の最高価格と最低価格を計算
-        max_past_price = past_data['price_close'].max()
-        min_past_price = past_data['price_close'].min()
+        # look_back_period前の価格を基準価格とする
+        base_price = df.iloc[index - look_back_period]['price_close']
 
         # 利益確定（Take Profit）と損切り（Stop Loss）の閾値を設定
-        take_profit_threshold = max_past_price * (1 + ptSl)
-        stop_loss_threshold = min_past_price * (1 - ptSl)
+        take_profit_threshold = base_price * (1 + ptSl)
+        stop_loss_threshold = base_price * (1 - ptSl)
 
-        # 現在価格が過去の最高価格に対する利益確定閾値を超えるか、
-        # 過去の最低価格に対する損切り閾値を下回るかをチェック
-        if current_price > take_profit_threshold:
-            label_values.append(2)
+        # 現在から過去look_back_period間のデータで利益確定や損切りが発生したか確認
+        for past_index in range(index - look_back_period + 1, index + 1):
+            past_price = df.iloc[past_index]['price_close']
 
-        elif current_price < stop_loss_threshold:
-            label_values.append(0)
+            if past_price >= take_profit_threshold:
+                label_values.append(2)
+                break
+            elif past_price <= stop_loss_threshold:
+                label_values.append(0)
+                break
         else:
             label_values.append(1)
 
@@ -77,7 +75,7 @@ def calculate_percentage(df, take_profit, stop_loss, time_horizon):
 
 def calculate_percentage_2(df, ptsl, time_horizon):
     # set_triple_barrier関数を呼び出してpercentageを計算
-    percentage = set_labels_based_on_past_data(df, ptsl, time_horizon)
+    percentage = set_labels_based_on_past_data(df, time_horizon, ptsl)
 
     # 計算されたpercentageを追加
     return percentage
@@ -87,8 +85,8 @@ if __name__ == '__main__':
     result_table = pd.DataFrame(columns=['Take Profit', 'Stop Loss', 'Time Horizon', 'Percentage'])
 
     # 異なる引数の組み合わせに対して計算
-    take_profit_values = [0.002, 0.004, 0.006, 0.008]
-    time_horizon_values = [3, 6, 9, 12]
+    take_profit_values = [0.005, 0.01, 0.02, 0.03]
+    time_horizon_values = [5, 10, 15, 20]
 
     df = load_data()
     for take_profit in take_profit_values:

@@ -14,11 +14,12 @@ from lstm.data_preprocessor import shape_data
 
 def generate_trade_signal(y_pred):
     signals = []
-    for pred in y_pred:
-        if pred > 0.5:  # メタモデルが取引を示唆する場合
-            signals.append('sell')
-        elif pred < -0.5:  # メタモデルが取引を示唆する場合
+    predicted_labels = np.argmax(y_pred, axis=1)
+    for pred in predicted_labels:
+        if pred == 2:  # メタモデルが取引を示唆する場合
             signals.append('buy')
+        elif pred == 0:  # メタモデルが取引を示唆する場合
+            signals.append('sell')
         else:
             signals.append('hold')
     return signals
@@ -44,7 +45,7 @@ def calculate_strategy_return(signals, market_returns):
 
 if __name__ == '__main__':
     # データの読み込み
-    with open('lstm/historical/csv/10m/historical_price_20230301.json', 'r') as file:
+    with open('lstm/historical/csv/10m/historical_price_20230201.json', 'r') as file:
         data = json.load(file)
 
     # Pandas DataFrameに変換
@@ -57,7 +58,7 @@ if __name__ == '__main__':
     # バックテストのロジック（ここでは単純な例を使用）
     # 例: 移動平均を基にシグナルを生成
     df_predict = load_data(is_validation=True)
-    df = shape_data(df_predict, is_df=True)
+    df = shape_data(df_predict, is_gbm=True)
     # 1次モデル（LSTM）のロード
     # モデルをファイルからロード
     loaded_model = lgb.Booster(model_file='./models/gbm/lightgbm_model.txt')
@@ -69,10 +70,6 @@ if __name__ == '__main__':
 
     # ロードしたモデルを使用して予測を実行
     y_pred_loaded = loaded_model.predict(X, num_iteration=loaded_model.best_iteration)
-
-
-    # 予測の結合（具体的なロジックは要調整）
-    predictions_df = pd.DataFrame({'predicted_value': y_pred_loaded})
 
 
     truncated_df = df.copy()
