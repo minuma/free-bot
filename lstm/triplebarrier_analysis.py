@@ -32,11 +32,52 @@ def set_triple_barrier(df, take_profit, stop_loss, time_horizon):
 
     return label_0_percentage
 
+def set_labels_based_on_past_data(df, ptSl, look_back_period):
+    df['label'] = 0
+
+    label_values = []  # ラベルを格納するリストを初期化
+    label_values = [-1] * look_back_period
+
+    for index in range(look_back_period, len(df)):
+        past_data = df.iloc[index - look_back_period:index]
+        current_price = df.iloc[index]['price_close']
+
+        # 過去の最高価格と最低価格を計算
+        max_past_price = past_data['price_close'].max()
+        min_past_price = past_data['price_close'].min()
+
+        # 利益確定（Take Profit）と損切り（Stop Loss）の閾値を設定
+        take_profit_threshold = max_past_price * (1 + ptSl)
+        stop_loss_threshold = min_past_price * (1 - ptSl)
+
+        # 現在価格が過去の最高価格に対する利益確定閾値を超えるか、
+        # 過去の最低価格に対する損切り閾値を下回るかをチェック
+        if current_price > take_profit_threshold:
+            label_values.append(2)
+
+        elif current_price < stop_loss_threshold:
+            label_values.append(0)
+        else:
+            label_values.append(1)
+
+    # label=0の割合を計算
+    df['label'] = label_values
+    label_1_percentage = (df['label'] == 1).mean()
+
+    return label_1_percentage
+
 import pandas as pd
 
 def calculate_percentage(df, take_profit, stop_loss, time_horizon):
     # set_triple_barrier関数を呼び出してpercentageを計算
     percentage = set_triple_barrier(df, take_profit, stop_loss, time_horizon)
+
+    # 計算されたpercentageを追加
+    return percentage
+
+def calculate_percentage_2(df, ptsl, time_horizon):
+    # set_triple_barrier関数を呼び出してpercentageを計算
+    percentage = set_labels_based_on_past_data(df, ptsl, time_horizon)
 
     # 計算されたpercentageを追加
     return percentage
@@ -52,7 +93,8 @@ if __name__ == '__main__':
     df = load_data()
     for take_profit in take_profit_values:
         for time_horizon in time_horizon_values:
-            percentage = calculate_percentage(df, take_profit, -take_profit, time_horizon)
+            # percentage = calculate_percentage(df, take_profit, -take_profit, time_horizon)
+            percentage = calculate_percentage_2(df, take_profit, time_horizon)
 
             # 結果をテーブルに追加
             result_table = pd.concat([result_table, pd.DataFrame({'Take Profit': [take_profit],

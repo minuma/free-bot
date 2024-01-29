@@ -119,19 +119,17 @@ def set_labels_based_on_past_data(df, look_back_period, ptSl):
         min_past_price = past_data['price_close'].min()
 
         # 利益確定（Take Profit）と損切り（Stop Loss）の閾値を設定
-        take_profit = (1+ptSl) * current_price
-        stop_loss = (1-ptSl) * current_price
+        take_profit_threshold = max_past_price * (1 + ptSl)
+        stop_loss_threshold = min_past_price * (1 - ptSl)
 
-        # 過去の最高価格または最低価格に対する現在価格の割合
-        price_ratio_to_max = current_price / max_past_price
-        price_ratio_to_min = current_price / min_past_price
-
-        if price_ratio_to_max > take_profit:
-            df.at[index, 'label'] = 1  # 利益確定の条件を満たす
-        elif price_ratio_to_min < stop_loss:
-            df.at[index, 'label'] = -1  # 損切りの条件を満たす
+        # 現在価格が過去の最高価格に対する利益確定閾値を超えるか、
+        # 過去の最低価格に対する損切り閾値を下回るかをチェック
+        if current_price > take_profit_threshold:
+            df.at[index, 'label'] = 2  # 利益確定の条件を満たす
+        elif current_price < stop_loss_threshold:
+            df.at[index, 'label'] = 0  # 損切りの条件を満たす
         else:
-            df.at[index, 'label'] = 0  # その他
+            df.at[index, 'label'] = 1  # その他
 
     return df
 

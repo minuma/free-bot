@@ -10,7 +10,7 @@ data = load_data()
 
 # 特徴量とターゲットの定義
 # 例: 'close' をターゲットとする場合
-df = shape_data(data, is_df=True)
+df = shape_data(data, is_gbm=True)
 y = df['label']
 X = df.drop(['label'], axis=1) # 'close' 以外の列を特徴量とする
 X = df.drop(['date_close'], axis=1) # 'close' 以外の列を特徴量とする
@@ -22,9 +22,13 @@ y_train, y_test = y[:train_size], y[train_size:]
 
 # LightGBMのパラメータ設定
 params = {
+    # 'boosting_type': 'gbdt',
+    # 'objective': 'regression',
+    # 'metric': 'rmse',
     'boosting_type': 'gbdt',
-    'objective': 'regression',
-    'metric': 'rmse',
+    'objective': 'multiclass',
+    'num_class': 3,
+    'metric': 'multi_logloss',
     'learning_rate': 0.01,
     'num_leaves': 31,
     'max_depth': -1,
