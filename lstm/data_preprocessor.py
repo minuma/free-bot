@@ -32,12 +32,14 @@ def shape_data(df, timesteps=20, is_predict=False, is_gbm=False):
 
     # 指定された列について異常値を検出し、置き換え
     columns = ['MA_100', 'price_close', 'MA_9', 'VWAP', 'divergence', 'max_divergence', 'OBV', 'MFI', 'Volume_Oscillator']
-    for col in columns:
-        replace_outliers_with_median(df, col)
+    if not is_gbm:
+        for col in columns:
+            replace_outliers_with_median(df, col)
 
     df.to_csv('./df.csv', index=False)
     if is_gbm:
-        return df.copy()
+        columns.append('label')
+        return df[columns].copy()
 
     # 特徴量とラベルの定義
     X = df[columns].values

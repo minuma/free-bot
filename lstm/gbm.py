@@ -6,21 +6,28 @@ from data_loader import load_data
 from data_preprocessor import shape_data
 
 
-data = load_data()
+## Train 
+data_train = load_data()
 
-# 特徴量とターゲットの定義
-# 例: 'close' をターゲットとする場合
-df = shape_data(data, is_gbm=True)
-y = df['label']
+df_train = shape_data(data_train, is_gbm=True)
+y_train = df_train['label']
 
-df.drop(['date_close'], axis=1, inplace=True)
-df.drop(['label'], axis=1, inplace=True)
-X = df
+df_train.drop(['label'], axis=1, inplace=True)
+X_train = df_train
+
+##  Test
+data_test = load_data(is_validation=True)
+
+df_test = shape_data(data_test, is_gbm=True)
+y_test = df_test['label']
+
+df_test.drop(['label'], axis=1, inplace=True)
+X_test = df_test
 
 # データをトレーニングセットとテストセットに分割
-train_size = int(len(data) * 0.3)
-X_train, X_test = X[:train_size], X[train_size:]
-y_train, y_test = y[:train_size], y[train_size:]
+# train_size = int(len(data) * 0.2)V
+# X_train, X_test = X[:train_size], X[train_size:]
+# y_train, y_test = y[:train_size], y[train_size:
 
 # LightGBMのパラメータ設定
 params = {
@@ -59,7 +66,7 @@ gbm = lgb.train(
     valid_sets=[train_data, test_data], 
     num_boost_round=5000, 
     callbacks=[
-        lgb.early_stopping(stopping_rounds=50),
+        lgb.early_stopping(stopping_rounds=500),
     ]
 )
 

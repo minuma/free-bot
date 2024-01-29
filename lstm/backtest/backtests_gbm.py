@@ -16,9 +16,9 @@ def generate_trade_signal(y_pred):
     signals = []
     predicted_labels = np.argmax(y_pred, axis=1)
     for pred in predicted_labels:
-        if pred == 2:  # メタモデルが取引を示唆する場合
+        if pred == 0:  # メタモデルが取引を示唆する場合
             signals.append('buy')
-        elif pred == 0:  # メタモデルが取引を示唆する場合
+        elif pred == 2:  # メタモデルが取引を示唆する場合
             signals.append('sell')
         else:
             signals.append('hold')
@@ -45,26 +45,27 @@ def calculate_strategy_return(signals, market_returns):
 
 if __name__ == '__main__':
     # データの読み込み
-    with open('lstm/historical/csv/10m/historical_price_20230201.json', 'r') as file:
+    with open('lstm/historical/csv/10m/historical_price_20230301.json', 'r') as file:
         data = json.load(file)
 
     # Pandas DataFrameに変換
-    df = pd.DataFrame(data['data'])
+    df_raw = pd.DataFrame(data['data'])
 
     # 日付列をDatetime型に変換
-    df['date_open'] = pd.to_datetime(df['date_open'])
-    df['date_close'] = pd.to_datetime(df['date_close'])
+    df_raw['date_open'] = pd.to_datetime(df_raw['date_open'])
+    df_raw['date_close'] = pd.to_datetime(df_raw['date_close'])
 
     # バックテストのロジック（ここでは単純な例を使用）
     # 例: 移動平均を基にシグナルを生成
-    df_predict = load_data(is_validation=True)
+    df_predict = load_data(is_backtest=True)
     df = shape_data(df_predict, is_gbm=True)
-    # 1次モデル（LSTM）のロード
+
     # モデルをファイルからロード
     y = df['label']
     truncated_df = df.copy()
+    truncated_df['date_open'] = df_raw['date_open']
+    truncated_df['date_close'] = df_raw['date_close']
 
-    df.drop(['date_close'], axis=1, inplace=True)
     df.drop(['label'], axis=1, inplace=True)
     X = df
 
