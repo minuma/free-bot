@@ -6,7 +6,7 @@ import pandas as pd
 
 
 
-def shape_data(df, timesteps=20, is_predict=False, is_df=False):
+def shape_data(df, timesteps=20, is_predict=False, is_gbm=False):
     # 移動平均、乖離度などの特徴量の計算
     df['MA_9'] = df['price_close'].rolling(window=9).mean()
     df['MA_100'] = df['price_close'].rolling(window=100).mean()
@@ -18,7 +18,10 @@ def shape_data(df, timesteps=20, is_predict=False, is_df=False):
     df['Volume_Oscillator'] = calculate_volume_oscillator(df)
 
     # トリプルバリアの適用
-    df = set_triple_barrier(df, take_profit=0.01, stop_loss=-0.01, time_horizon=20)
+    if is_gbm:
+        df = set_labels_based_on_past_data(df, look_back_period=20, ptSl=0.01)
+    else:
+        df = set_triple_barrier(df, take_profit=0.01, stop_loss=-0.01, time_horizon=20)
 
     # 差分の計算
     columns_to_diff = ['price_close', 'MA_9', 'MA_100', 'OBV', 'diff_MA_100', 'VWAP', 'divergence']
@@ -32,7 +35,7 @@ def shape_data(df, timesteps=20, is_predict=False, is_df=False):
         replace_outliers_with_median(df, col)
 
     df.to_csv('./df.csv', index=False)
-    if is_df:
+    if is_gbm:
         return df.copy()
 
     # 特徴量とラベルの定義
@@ -103,6 +106,35 @@ def set_triple_barrier(df, take_profit, stop_loss, time_horizon):
         print("label=0の割合が90%を超えていません。")
 
     return df
+
+def set_labels_based_on_past_data(df, look_back_period, ptSl):
+    df['label'] = 0
+
+    for index in range(look_back_period, len(df)):
+        past_data = df.iloc[index - look_back_period:index]
+        current_price = df.iloc[index]['price_close']
+
+        # 過去の最高価格と最低価格を計算
+        max_past_price = past_data['price_close'].max()
+        min_past_price = past_data['price_close'].min()
+
+        # 利益確定（Take Profit）と損切り（Stop Loss）の閾値を設定
+        take_profit = (1+ptSl) * current_price
+        stop_loss = (1-ptSl) * current_price
+
+        # 過去の最高価格または最低価格に対する現在価格の割合
+        price_ratio_to_max = current_price / max_past_price
+        price_ratio_to_min = current_price / min_past_price
+
+        if price_ratio_to_max > take_profit:
+            df.at[index, 'label'] = 1  # 利益確定の条件を満たす
+        elif price_ratio_to_min < stop_loss:
+            df.at[index, 'label'] = -1  # 損切りの条件を満たす
+        else:
+            df.at[index, 'label'] = 0  # その他
+
+    return df
+
 
 
 def calculate_divergence_max(df):

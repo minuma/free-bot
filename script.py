@@ -6,13 +6,13 @@ def job():
     with open('/home/minuma/free-bot/result.txt', 'a') as f:  # ここで指定したパスに結果を追記します
         # 各コマンドの実行結果をファイルに書き込む
         result = subprocess.run(['python', '/home/minuma/free-bot/lstm/historical/syve_api.py'], capture_output=True, text=True)
-        f.write(result.stdout + "\n")
+        f.write(result.stdout)
 
         result = subprocess.run(['python', '/home/minuma/free-bot/lstm/gbm_predict.py'], capture_output=True, text=True)
-        f.write(result.stdout + "\n")
+        # f.write(result.stdout + "\n")
 
         result = subprocess.run(['python', '/home/minuma/free-bot/bot/gateio.py'], capture_output=True, text=True)
-        f.write(result.stdout + "\n")
+        f.write(result.stdout)
 
 # スケジュール設定前に1回実行
 job()
