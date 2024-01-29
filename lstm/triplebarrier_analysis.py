@@ -87,8 +87,8 @@ if __name__ == '__main__':
     result_table = pd.DataFrame(columns=['Take Profit', 'Stop Loss', 'Time Horizon', 'Percentage'])
 
     # 異なる引数の組み合わせに対して計算
-    take_profit_values = [0.005, 0.01, 0.015]
-    time_horizon_values = [5, 10, 15, 20]
+    take_profit_values = [0.002, 0.004, 0.006, 0.008]
+    time_horizon_values = [3, 6, 9, 12]
 
     df = load_data()
     for take_profit in take_profit_values:

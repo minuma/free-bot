@@ -89,10 +89,10 @@ def get_side_from_predictions():
     df = pd.read_csv('./predictions.csv')
     last_predicted_value = df['predicted_value'].iloc[-1]
     print(last_predicted_value)
-    if last_predicted_value > 0.5:
-        return "sell"
-    elif last_predicted_value < -0.5:
+    if last_predicted_value == 2:
         return "buy"
+    elif last_predicted_value == 0:
+        return "sell"
     else:
         return "hold"
 

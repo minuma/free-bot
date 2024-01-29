@@ -19,7 +19,7 @@ def shape_data(df, timesteps=20, is_predict=False, is_gbm=False):
 
     # トリプルバリアの適用
     if is_gbm:
-        df = set_labels_based_on_past_data(df, look_back_period=20, ptSl=0.01)
+        df = set_labels_based_on_past_data(df, look_back_period=3, ptSl=0.002)
     else:
         df = set_triple_barrier(df, take_profit=0.01, stop_loss=-0.01, time_horizon=20)
 
