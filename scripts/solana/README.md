@@ -1,2 +1,3 @@
 ## default.csv
-solanaのチェーンからcsvがダウンロードできる
+ここからsolのdefaultをダウンロードできる
+https://stake.tax/
