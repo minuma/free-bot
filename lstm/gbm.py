@@ -16,7 +16,7 @@ X = df.drop(['label'], axis=1) # 'close' 以外の列を特徴量とする
 X = df.drop(['date_close'], axis=1) # 'close' 以外の列を特徴量とする
 
 # データをトレーニングセットとテストセットに分割
-train_size = int(len(data) * 0.8)
+train_size = int(len(data) * 0.3)
 X_train, X_test = X[:train_size], X[train_size:]
 y_train, y_test = y[:train_size], y[train_size:]
 

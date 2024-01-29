@@ -16,9 +16,9 @@ def generate_trade_signal(y_pred):
     signals = []
     predicted_labels = np.argmax(y_pred, axis=1)
     for pred in predicted_labels:
-        if pred == 2:  # メタモデルが取引を示唆する場合
+        if pred == 0:  # メタモデルが取引を示唆する場合
             signals.append('buy')
-        elif pred == 0:  # メタモデルが取引を示唆する場合
+        elif pred == 2:  # メタモデルが取引を示唆する場合
             signals.append('sell')
         else:
             signals.append('hold')
