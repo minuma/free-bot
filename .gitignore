@@ -4,5 +4,5 @@
 *.json
 *.joblib
 *.png
-/lightgbm_model.txt
+models/gbm/lightgbm_model.txt
 result.txt
