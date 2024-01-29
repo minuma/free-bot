@@ -12,8 +12,10 @@ data = load_data()
 # 例: 'close' をターゲットとする場合
 df = shape_data(data, is_gbm=True)
 y = df['label']
-X = df.drop(['label'], axis=1) # 'close' 以外の列を特徴量とする
-X = df.drop(['date_close'], axis=1) # 'close' 以外の列を特徴量とする
+
+df.drop(['date_close'], axis=1, inplace=True)
+df.drop(['label'], axis=1, inplace=True)
+X = df
 
 # データをトレーニングセットとテストセットに分割
 train_size = int(len(data) * 0.3)

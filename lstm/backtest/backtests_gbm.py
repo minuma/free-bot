@@ -16,9 +16,9 @@ def generate_trade_signal(y_pred):
     signals = []
     predicted_labels = np.argmax(y_pred, axis=1)
     for pred in predicted_labels:
-        if pred == 0:  # メタモデルが取引を示唆する場合
+        if pred == 2:  # メタモデルが取引を示唆する場合
             signals.append('buy')
-        elif pred == 2:  # メタモデルが取引を示唆する場合
+        elif pred == 0:  # メタモデルが取引を示唆する場合
             signals.append('sell')
         else:
             signals.append('hold')
@@ -61,18 +61,18 @@ if __name__ == '__main__':
     df = shape_data(df_predict, is_gbm=True)
     # 1次モデル（LSTM）のロード
     # モデルをファイルからロード
-    loaded_model = lgb.Booster(model_file='./models/gbm/lightgbm_model.txt')
     y = df['label']
-    date = df['date_close']
-    X = df.drop(['label'], axis=1) # 'close' 以外の列を特徴量とする
-    X = df.drop(['date_close'], axis=1) # 'close' 以外の列を特徴量とする
-    y_pred_loaded = loaded_model.predict(X, num_iteration=loaded_model.best_iteration)
+    truncated_df = df.copy()
+
+    df.drop(['date_close'], axis=1, inplace=True)
+    df.drop(['label'], axis=1, inplace=True)
+    X = df
 
     # ロードしたモデルを使用して予測を実行
+    loaded_model = lgb.Booster(model_file='./models/gbm/lightgbm_model.txt')
     y_pred_loaded = loaded_model.predict(X, num_iteration=loaded_model.best_iteration)
 
 
-    truncated_df = df.copy()
     truncated_df['market_return'] = truncated_df['price_close'].pct_change()
     truncated_df['market_return'].fillna(0, inplace=True)
 

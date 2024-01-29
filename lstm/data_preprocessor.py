@@ -19,7 +19,8 @@ def shape_data(df, timesteps=20, is_predict=False, is_gbm=False):
 
     # トリプルバリアの適用
     if is_gbm:
-        df = set_labels_based_on_past_data(df, look_back_period=10, ptSl=0.01)
+        # df = set_labels_based_on_past_data(df, look_back_period=10, ptSl=0.01)
+        df = set_triple_barrier(df, take_profit=0.01, stop_loss=-0.01, time_horizon=20)
     else:
         df = set_triple_barrier(df, take_profit=0.01, stop_loss=-0.01, time_horizon=20)
 
@@ -73,7 +74,7 @@ def replace_outliers_with_median(df, col):
 
 def set_triple_barrier(df, take_profit, stop_loss, time_horizon):
     # ラベル列の初期化
-    df['label'] = 0 
+    df['label'] =  1
 
     for index, row in df.iterrows():
         # 上限バリア、下限バリア、時間バリアを設定
@@ -84,17 +85,17 @@ def set_triple_barrier(df, take_profit, stop_loss, time_horizon):
         for future_index in range(index + 1, end_time + 1):
             future_row = df.iloc[future_index]
             if future_row['price_close'] >= upper_barrier:
-                df.at[index, 'label'] = 1  # 上限バリア達成
+                df.at[index, 'label'] = 2  # 上限バリア達成
                 break
             elif future_row['price_close'] <= lower_barrier:
-                df.at[index, 'label'] = -1  # 下限バリア達成
+                df.at[index, 'label'] = 0  # 下限バリア達成
                 break
         else:
             # 時間バリア達成
-            df.at[index, 'label'] = 0
+            df.at[index, 'label'] = 1
 
     # label=0の割合を計算
-    label_0_percentage = (df['label'] == 0).mean()
+    label_0_percentage = (df['label'] == 1).mean()
 
     # 割合が50%以上であるかどうかを判定
     print("====================================")
