@@ -12,17 +12,22 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'
 from lstm.data_loader import load_data
 from lstm.data_preprocessor import shape_data
 
-def generate_trade_signal(y_pred):
+def generate_trade_signal(y_pred, y_pred_meta):
     signals = []
     predicted_labels = np.argmax(y_pred, axis=1)
-    for pred in predicted_labels:
-        if pred == 0:  # メタモデルが取引を示唆する場合
-            signals.append('buy')
-        elif pred == 2:  # メタモデルが取引を示唆する場合
-            signals.append('sell')
+    mean_value = np.mean(y_pred_meta)
+    for pred, meta in zip(predicted_labels, y_pred_meta):
+        if meta >= mean_value:  # y_pred_metaが0.5以上の場合のみ売買を考慮
+            if pred == 0:  # メタモデルが買いを示唆する場合
+                signals.append('buy')
+            elif pred == 2:  # メタモデルが売りを示唆する場合
+                signals.append('sell')
+            else:
+                signals.append('hold')
         else:
-            signals.append('hold')
+            signals.append('hold')  # y_pred_metaが0.5未満の場合は常に'hold'
     return signals
+
 
 def calculate_strategy_return(signals, market_returns):
     strategy_returns = []
@@ -74,13 +79,25 @@ if __name__ == '__main__':
     y_pred_loaded = loaded_model.predict(X, num_iteration=loaded_model.best_iteration)
 
 
-    truncated_df['market_return'] = truncated_df['price_close'].pct_change()
-    truncated_df['market_return'].fillna(0, inplace=True)
+    # metaのためのデータ処理
+    loaded_model_meta = lgb.Booster(model_file='./models/gbm/lightgbm_model_meta.txt')
+    rows_to_drop = len(X) - len(y_pred_loaded)
+    X_trimmed = X.iloc[rows_to_drop:]
+    X_trimmed.reset_index(drop=True, inplace=True)
+
+    predicted_labels = np.argmax(y_pred_loaded, axis=1)
+    predictions_df = pd.DataFrame({'predicted_label': predicted_labels})
+    predictions_df = predictions_df[['predicted_label']]
+
+    X_comb = X_trimmed.join(predictions_df)
+    y_pred_loaded_meta = loaded_model_meta.predict(X_comb, num_iteration=loaded_model.best_iteration)
 
     # 取引シグナルに基づいて戦略リターンを計算
-    truncated_df['trade_signal'] = generate_trade_signal(y_pred_loaded) 
-    truncated_df['strategy_return'] = calculate_strategy_return(truncated_df['trade_signal'], truncated_df['market_return']) 
+    truncated_df['trade_signal'] = generate_trade_signal(y_pred_loaded, y_pred_loaded_meta) 
 
+    truncated_df['market_return'] = truncated_df['price_close'].pct_change()
+    truncated_df['market_return'].fillna(0, inplace=True)
+    truncated_df['strategy_return'] = calculate_strategy_return(truncated_df['trade_signal'], truncated_df['market_return']) 
 
     # 累積リターンの計算
     truncated_df['cumulative_market_return'] = (1 + truncated_df['market_return']).cumprod()

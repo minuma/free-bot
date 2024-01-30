@@ -3,9 +3,9 @@ import json
 from datetime import datetime
 
 def load_data(is_validation=False, is_backtest=False):
-    file_path = './lstm/historical/csv/10m/historical_price_20230101.json'
+    file_path = './lstm/historical/csv/10m/historical_price_20230201.json'
     if is_validation:
-        file_path = './lstm/historical/csv/10m/historical_price_20230201.json'
+        file_path = './lstm/historical/csv/10m/historical_price_20230301.json'
     if is_backtest:
         file_path = './lstm/historical/csv/10m/historical_price_20230401.json'
     # JSONファイルからデータを読み込む

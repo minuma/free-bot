@@ -25,9 +25,9 @@ df_test.drop(['label'], axis=1, inplace=True)
 X_test = df_test
 
 # データをトレーニングセットとテストセットに分割
-# train_size = int(len(data) * 0.2)V
+# train_size = int(len(data) * 0.2)
 # X_train, X_test = X[:train_size], X[train_size:]
-# y_train, y_test = y[:train_size], y[train_size:
+# y_train, y_test = y[:train_size], y[train_size:]
 
 # LightGBMのパラメータ設定
 params = {
