@@ -85,13 +85,23 @@ def get_position_size():
 
     return r.json().get("size")
 
+# def get_side_from_predictions():
+#     df = pd.read_csv('./predictions.csv')
+#     last_predicted_value = df['predicted_label'].iloc[-1]
+#     print(last_predicted_value)
+#     if last_predicted_value == 0:
+#         return "buy"
+#     elif last_predicted_value == 2:
+#         return "sell"
+#     else:
+#         return "hold"
+
 def get_side_from_predictions():
     df = pd.read_csv('./predictions.csv')
     last_predicted_value = df['predicted_label'].iloc[-1]
-    print(last_predicted_value)
-    if last_predicted_value == 0:
+    if last_predicted_value == 'buy':
         return "buy"
-    elif last_predicted_value == 2:
+    elif last_predicted_value == 'sell':
         return "sell"
     else:
         return "hold"
