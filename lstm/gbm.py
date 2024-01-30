@@ -7,27 +7,27 @@ from data_preprocessor import shape_data
 
 
 ## Train 
-data_train = load_data()
+data_1 = load_data()
 
-df_train = shape_data(data_train, is_gbm=True)
-y_train = df_train['label']
+df_1 = shape_data(data_1, is_gbm=True)
+y_1 = df_1['label']
 
-df_train.drop(['label'], axis=1, inplace=True)
-X_train = df_train
+df_1.drop(['label'], axis=1, inplace=True)
+X_1 = df_1
 
-##  Test
-data_test = load_data(is_validation=True)
+# ##  Test
+# data_test = load_data(is_validation=True)
 
-df_test = shape_data(data_test, is_gbm=True)
-y_test = df_test['label']
+# df_test = shape_data(data_test, is_gbm=True)
+# y_test = df_test['label']
 
-df_test.drop(['label'], axis=1, inplace=True)
-X_test = df_test
+# df_test.drop(['label'], axis=1, inplace=True)
+# X_test = df_test
 
 # データをトレーニングセットとテストセットに分割
-# train_size = int(len(data) * 0.2)
-# X_train, X_test = X[:train_size], X[train_size:]
-# y_train, y_test = y[:train_size], y[train_size:]
+train_size = int(len(data_1) * 0.2)
+X_train, X_test = X_1[:train_size], X_1[train_size:]
+y_train, y_test = y_1[:train_size], y_1[train_size:]
 
 # LightGBMのパラメータ設定
 params = {
