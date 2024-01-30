@@ -36,8 +36,8 @@ params = {
     'num_class': 3,
     'metric': 'multi_logloss',
     'learning_rate': 0.01,
-    'num_leaves': 20,  # 少なくする
-    'max_depth': 7,  # 深さを制限する
+    'num_leaves': 31,  # 少なくする
+    'max_depth': 10,  # 深さを制限する
     'min_child_samples': 30,  # 増やす
     'max_bin': 255,
     'subsample': 0.6,

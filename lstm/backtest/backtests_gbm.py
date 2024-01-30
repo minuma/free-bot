@@ -115,3 +115,11 @@ if __name__ == '__main__':
     plt.ylabel('Cumulative Return')
     plt.title('Backtest Result')
     plt.savefig('cumulative_return_plot.png')
+
+    # 'trade_signal'列の値の割合を計算
+    trade_signal_counts = truncated_df['trade_signal'].value_counts(normalize=True)
+
+    # 割合をパーセンテージとして出力
+    print("Buy: {:.2%}".format(trade_signal_counts.get('buy', 0)))
+    print("Sell: {:.2%}".format(trade_signal_counts.get('sell', 0)))
+    print("Hold: {:.2%}".format(trade_signal_counts.get('hold', 0)))

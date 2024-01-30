@@ -20,9 +20,9 @@ def shape_data(df, timesteps=20, is_predict=False, is_gbm=False):
     # トリプルバリアの適用
     if is_gbm:
         # df = set_labels_based_on_past_data(df, look_back_period=10, ptSl=0.01)
-        df = set_triple_barrier(df, take_profit=0.01, stop_loss=-0.01, time_horizon=20)
+        df = set_triple_barrier(df, take_profit=0.01, stop_loss=-0.01, time_horizon=10)
     else:
-        df = set_triple_barrier(df, take_profit=0.01, stop_loss=-0.01, time_horizon=20)
+        df = set_triple_barrier(df, take_profit=0.01, stop_loss=-0.01, time_horizon=10)
 
     # 差分の計算
     columns_to_diff = ['price_close', 'MA_9', 'MA_100', 'OBV', 'diff_MA_100', 'VWAP', 'divergence']
@@ -102,11 +102,11 @@ def set_triple_barrier(df, take_profit, stop_loss, time_horizon):
     # 割合が50%以上であるかどうかを判定
     print("====================================")
     if label_0_percentage > 0.9:
-        print(f"label=0の割合: {label_0_percentage * 100:.2f}%")
-        print("label=0の割合が90%を超えています。")
+        print(f"label=1の割合: {label_0_percentage * 100:.2f}%")
+        print("label=1の割合が90%を超えています。")
     else:
-        print(f"label=0の割合: {label_0_percentage * 100:.2f}%")
-        print("label=0の割合が90%を超えていません。")
+        print(f"label=1の割合: {label_0_percentage * 100:.2f}%")
+        print("label=1の割合が90%を超えていません。")
 
     return df
 
