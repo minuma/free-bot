@@ -50,7 +50,7 @@ def calculate_strategy_return(signals, market_returns):
 
 if __name__ == '__main__':
     # データの読み込み
-    with open('lstm/historical/csv/10m/historical_price_20230301.json', 'r') as file:
+    with open('lstm/historical/csv/10m/historical_price_20240101.json', 'r') as file:
         data = json.load(file)
 
     # Pandas DataFrameに変換

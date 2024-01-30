@@ -3,11 +3,11 @@ import json
 from datetime import datetime
 
 def load_data(is_validation=False, is_backtest=False, is_trade=False):
-    file_path = './lstm/historical/csv/10m/historical_price_20230101.json'
+    file_path = './lstm/historical/csv/10m/historical_price_20240101.json'
     if is_validation:
-        file_path = './lstm/historical/csv/10m/historical_price_20230201.json'
+        file_path = './lstm/historical/csv/10m/historical_price_20240101.json'
     if is_backtest:
-        file_path = './lstm/historical/csv/10m/historical_price_20230301.json'
+        file_path = './lstm/historical/csv/10m/historical_price_20240101.json'
     if is_trade:
         file_path = './lstm/historical/csv/historical_price.json'
     # JSONファイルからデータを読み込む
