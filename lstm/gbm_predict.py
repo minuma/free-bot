@@ -14,9 +14,9 @@ def generate_trade_signal(y_pred, y_pred_meta):
     mean_value = np.mean(y_pred_meta)
     for pred, meta in zip(predicted_labels, y_pred_meta):
         if meta >= mean_value:  # y_pred_metaが0.5以上の場合のみ売買を考慮
-            if pred == 0:  # メタモデルが買いを示唆する場合
+            if pred == 2:  # メタモデルが買いを示唆する場合
                 signals.append('buy')
-            elif pred == 2:  # メタモデルが売りを示唆する場合
+            elif pred == 0:  # メタモデルが売りを示唆する場合
                 signals.append('sell')
             else:
                 signals.append('hold')
@@ -30,19 +30,17 @@ if __name__ == '__main__':
     df = shape_data(df_predict, is_gbm=True)
 
     # モデルをファイルからロード
-    y = df['label']
-    truncated_df = df.copy()
-
     df.drop(['label'], axis=1, inplace=True)
     X = df
+    truncated_df = df.copy()
 
     # ロードしたモデルを使用して予測を実行
-    loaded_model = lgb.Booster(model_file='./models/gbm/lightgbm_model_1.txt')
+    loaded_model = lgb.Booster(model_file='./models/gbm/lightgbm_model.txt')
     y_pred_loaded = loaded_model.predict(X, num_iteration=loaded_model.best_iteration)
 
 
     # metaのためのデータ処理
-    loaded_model_meta = lgb.Booster(model_file='./models/gbm/lightgbm_model_meta_1.txt')
+    loaded_model_meta = lgb.Booster(model_file='./models/gbm/lightgbm_model_meta.txt')
     rows_to_drop = len(X) - len(y_pred_loaded)
     X_trimmed = X.iloc[rows_to_drop:]
     X_trimmed.reset_index(drop=True, inplace=True)
