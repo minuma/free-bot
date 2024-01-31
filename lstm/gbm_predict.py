@@ -37,12 +37,12 @@ if __name__ == '__main__':
     X = df
 
     # ロードしたモデルを使用して予測を実行
-    loaded_model = lgb.Booster(model_file='./models/gbm/lightgbm_model.txt')
+    loaded_model = lgb.Booster(model_file='./models/gbm/lightgbm_model_1.txt')
     y_pred_loaded = loaded_model.predict(X, num_iteration=loaded_model.best_iteration)
 
 
     # metaのためのデータ処理
-    loaded_model_meta = lgb.Booster(model_file='./models/gbm/lightgbm_model_meta.txt')
+    loaded_model_meta = lgb.Booster(model_file='./models/gbm/lightgbm_model_meta_1.txt')
     rows_to_drop = len(X) - len(y_pred_loaded)
     X_trimmed = X.iloc[rows_to_drop:]
     X_trimmed.reset_index(drop=True, inplace=True)

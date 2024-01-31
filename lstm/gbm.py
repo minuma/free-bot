@@ -15,6 +15,7 @@ y_1 = df_1['label']
 df_1.drop(['label'], axis=1, inplace=True)
 X_1 = df_1
 
+
 # ##  Test
 # data_test = load_data(is_validation=True)
 
