@@ -98,7 +98,7 @@ def get_position_size():
 
 def get_side_from_predictions():
     df = pd.read_csv('./predictions.csv')
-    last_predicted_value = df['predicted_label'].iloc[-1]
+    last_predicted_value = df['predicted_label'].iloc[-2]
     if last_predicted_value == 'buy':
         return "buy"
     elif last_predicted_value == 'sell':
