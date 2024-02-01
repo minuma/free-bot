@@ -9,6 +9,7 @@ import pandas as pd
 def shape_data(df, timesteps=20, is_predict=False, is_gbm=False):
     # 移動平均、乖離度などの特徴量の計算
     df['MA_9'] = df['price_close'].rolling(window=9).mean()
+    df['MA_50'] = df['price_close'].rolling(window=50).mean()
     df['MA_100'] = df['price_close'].rolling(window=100).mean()
     df = calculate_divergence_max(df)
     df['OBV'] = calculate_obv(df)
@@ -16,23 +17,23 @@ def shape_data(df, timesteps=20, is_predict=False, is_gbm=False):
     df['VWAP'] = calculate_vwap(df)
     df['MFI'] = calculate_mfi(df)
     df['Volume_Oscillator'] = calculate_volume_oscillator(df)
-
     # トリプルバリアの適用
     if is_gbm:
         # df = set_labels_based_on_past_data(df, look_back_period=10, ptSl=0.01)
-        df = set_triple_barrier(df, take_profit=0.01, stop_loss=-0.01, time_horizon=10)
+        # df = set_triple_barrier(df, take_profit=0.01, stop_loss=-0.01, time_horizon=10)
+        df = calc_ma_slope(df, timesteps=5)
     else:
         df = set_triple_barrier(df, take_profit=0.01, stop_loss=-0.01, time_horizon=10)
 
     # 差分の計算
-    columns_to_diff = ['price_close', 'MA_9', 'MA_100', 'OBV', 'diff_MA_100', 'VWAP', 'divergence']
+    columns_to_diff = ['price_close', 'MA_9', 'MA_50', 'MA_100', 'OBV', 'VWAP', 'divergence']
     for col in columns_to_diff:
         df[f'diff_{col}'] = df[col].diff()
     df.dropna(inplace=True)
 
     # 指定された列について異常値を検出し、置き換え
     # max divergenceは未来の値を含んでいるので注意
-    columns = ['price_close', 'MA_100', 'diff_MA_100', 'diff_price_close', 'diff_MA_9', 'VWAP', 'diff_divergence', 'divergence']
+    columns = ['price_close', 'diff_MA_100', 'diff_MA_50', 'diff_MA_9', 'diff_divergence', 'divergence', 'OBV', 'VWAP', 'MFI', 'Volume_Oscillator']
     if not is_gbm:
         for col in columns:
             replace_outliers_with_median(df, col)
@@ -74,6 +75,32 @@ def replace_outliers_with_median(df, col):
     median = df[col].median()
 
     df[col] = np.where((df[col] < Q1) | (df[col] > Q3), median, df[col])
+
+import numpy as np
+
+def calc_ma_slope(df, timesteps=10, threshold=0.0001):
+    # ラベル列の初期化
+    df['label'] = 1
+
+    df['MA_100'] = df['price_close'].rolling(window=100).mean()
+
+    for index, row in df.iterrows():
+        # 10個先のMA_100の傾きに基づいてラベルを設定
+        if index + timesteps < len(df):
+            y_values = df['MA_100'].iloc[index:index+11].values
+            x_values = np.arange(0, len(y_values))
+            slope = np.polyfit(x_values, y_values, 1)[0]  # 傾きを計算
+
+            if abs(slope) > threshold:
+                if slope > 0:
+                    df.at[index, 'label'] = 2  # 正の傾き
+                else:
+                    df.at[index, 'label'] = 0  # 負の傾き
+            else:
+                df.at[index, 'label'] = 1  # ほとんど傾いていない
+
+    return df
+
 
 def set_triple_barrier(df, take_profit, stop_loss, time_horizon):
     # ラベル列の初期化

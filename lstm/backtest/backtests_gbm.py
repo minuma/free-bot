@@ -15,12 +15,17 @@ from lstm.data_preprocessor import shape_data
 def generate_trade_signal(y_pred, y_pred_meta):
     signals = []
     predicted_labels = np.argmax(y_pred, axis=1)
+    print(y_pred)
+    # # 1つ目と3つ目の数値だけを取り出す
+    # y_pred_modified = y_pred[:, [0, 2]]
+    # # 修正した配列で最大値を持つインデックスを見つける
+    # predicted_labels = np.argmax(y_pred_modified, axis=1)
     mean_value = np.mean(y_pred_meta)
     for pred, meta in zip(predicted_labels, y_pred_meta):
         if meta >= mean_value:  # y_pred_metaが0.5以上の場合のみ売買を考慮
-            if pred == 2:  # メタモデルが買いを示唆する場合
+            if pred == 0:  # メタモデルが買いを示唆する場合
                 signals.append('buy')
-            elif pred == 0:  # メタモデルが売りを示唆する場合
+            elif pred == 2:  # メタモデルが売りを示唆する場合
                 signals.append('sell')
             else:
                 signals.append('hold')
@@ -38,7 +43,9 @@ def calculate_strategy_return(signals, market_returns):
             position = 1
         elif signals.iloc[i-1] == 'sell':
             position = -1
-        # 'hold'の場合、前回のポジションを維持
+        elif signals.iloc[i-1] == 'hold':
+            # 'hold'の場合、前回のポジションを維持
+            position = 0
 
         # 戦略リターンは1個遅れた市場リターンとポジションに依存する
         strategy_return = market_returns.iloc[i] * position
@@ -49,7 +56,7 @@ def calculate_strategy_return(signals, market_returns):
 if __name__ == '__main__':
     # データの読み込み
     # with open('lstm/historical/csv/historical_price.json', 'r') as file:
-    with open('lstm/historical/csv/10m/historical_price_20240101.json', 'r') as file:
+    with open('lstm/historical/csv/10m/matic/historical_price_20240101.json', 'r') as file:
         data = json.load(file)
 
     # Pandas DataFrameに変換

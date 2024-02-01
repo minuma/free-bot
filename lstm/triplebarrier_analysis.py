@@ -91,8 +91,8 @@ if __name__ == '__main__':
     df = load_data()
     for take_profit in take_profit_values:
         for time_horizon in time_horizon_values:
-            # percentage = calculate_percentage(df, take_profit, -take_profit, time_horizon)
-            percentage = calculate_percentage_2(df, take_profit, time_horizon)
+            percentage = calculate_percentage(df, take_profit, -take_profit, time_horizon)
+            # percentage = calculate_percentage_2(df, take_profit, time_horizon)
 
             # 結果をテーブルに追加
             result_table = pd.concat([result_table, pd.DataFrame({'Take Profit': [take_profit],

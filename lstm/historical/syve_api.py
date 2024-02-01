@@ -15,7 +15,7 @@ class SyveApi:
         self.pool_address = pool_address
 
     def get_historical_price(self):
-        date_str = "2023-10-01:00:00Z"
+        date_str = "2023-02-01:00:00Z"
         # datetimeオブジェクトに変換
         date_obj = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
         # UTCタイムゾーンを設定
@@ -34,7 +34,7 @@ class SyveApi:
         params = {
             'token_address': self.token_address,
             'pool_address': self.pool_address,
-            'interval': '1h',
+            'interval': '10m',
             'max_size': 2500,
             'fill': True,
             'key': os.getenv('SYVE_API_KEY'),
