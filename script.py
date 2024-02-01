@@ -22,7 +22,7 @@ def job():
 # job()
 
 # 毎時特定の分に実行するスケジュールを設定
-for minute in range(0, 60, 10):
+for minute in range(1, 60, 10):
     schedule.every().hour.at(f":{minute:02d}").do(job)
 
 while True:

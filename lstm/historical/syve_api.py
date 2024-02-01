@@ -15,21 +15,21 @@ class SyveApi:
         self.pool_address = pool_address
 
     def get_historical_price(self):
-        # date_str = "2023-11-01:00:00Z"
-        # # datetimeオブジェクトに変換
-        # date_obj = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
-        # # UTCタイムゾーンを設定
-        # date_obj = date_obj.replace(tzinfo=timezone.utc)
-        # # Unixタイムスタンプに変換
-        # from_timestamp = int(date_obj.timestamp())
-
-        # ↓ 実取引用
-        # 現在の日時を取得
-        now = datetime.now(timezone.utc)
-        # 1日前の日時を計算
-        three_days_ago = now - timedelta(days=1)
+        date_str = "2023-11-01:00:00Z"
+        # datetimeオブジェクトに変換
+        date_obj = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
+        # UTCタイムゾーンを設定
+        date_obj = date_obj.replace(tzinfo=timezone.utc)
         # Unixタイムスタンプに変換
-        from_timestamp = int(three_days_ago.timestamp())
+        from_timestamp = int(date_obj.timestamp())
+
+        # # ↓ 実取引用
+        # # 現在の日時を取得
+        # now = datetime.now(timezone.utc)
+        # # 1日前の日時を計算
+        # three_days_ago = now - timedelta(days=2)
+        # # Unixタイムスタンプに変換
+        # from_timestamp = int(three_days_ago.timestamp())
 
         params = {
             'token_address': self.token_address,
@@ -52,7 +52,7 @@ class SyveApi:
         return None
 
 # クラスの使用例
-token_address = '0x7D1AfA7B718fb893dB30A3aBc0Cfc608AaCfeBB0' # matic
+token_address = '0x92d6c1e31e14520e676a687f0a93788b716beff5' # arb
 pool_address = 'all'
 
 api = SyveApi(token_address, pool_address)
@@ -67,7 +67,7 @@ if historical_price:
     # JSONファイルに保存
     try:
         with open(os.path.join(csv_folder_path, 'historical_price.json'), 'w') as json_file:
-            json.dump(historical_price, json_file)
+            json.dump(historical_price, json_file, indent=4)
         print("データがcsv/historical_price.jsonに保存されました。")
     except Exception as e:
         print(f"ファイル保存中にエラーが発生しました: {e}")
