@@ -31,7 +31,8 @@ def shape_data(df, timesteps=20, is_predict=False, is_gbm=False):
     df.dropna(inplace=True)
 
     # 指定された列について異常値を検出し、置き換え
-    columns = ['price_close', 'diff_MA_100', 'diff_price_close', 'diff_MA_9', 'VWAP', 'diff_divergence', 'MFI']
+    # max divergenceは未来の値を含んでいるので注意
+    columns = ['price_close', 'MA_100', 'diff_MA_100', 'diff_price_close', 'diff_MA_9', 'VWAP', 'diff_divergence', 'divergence']
     if not is_gbm:
         for col in columns:
             replace_outliers_with_median(df, col)

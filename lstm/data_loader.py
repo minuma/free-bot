@@ -4,6 +4,7 @@ from datetime import datetime
 
 def load_data(is_validation=False, is_backtest=False, is_trade=False):
     file_path = './lstm/historical/csv/10m/historical_price_20231101.json'
+    # file_path = './lstm/historical/csv/historical_price.json'
     if is_validation:
         file_path = './lstm/historical/csv/10m/historical_price_20231201.json'
     if is_backtest:
@@ -26,6 +27,7 @@ def load_data(is_validation=False, is_backtest=False, is_trade=False):
             'volume': volume_data,
             'date_close': date,
         })
+        df['volume'] = df['volume'].apply(lambda x: abs(x) if x < 0 else x)
 
         # date_closeをDateTime型に変換
         df['date_close'] = pd.to_datetime(df['date_close']) + pd.Timedelta(hours=9)
