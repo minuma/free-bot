@@ -13,7 +13,7 @@ def generate_trade_signal(y_pred, y_pred_meta):
     predicted_labels = np.argmax(y_pred, axis=1)
     mean_value = np.mean(y_pred_meta)
     for pred, meta in zip(predicted_labels, y_pred_meta):
-        if meta >= mean_value:  # y_pred_metaが0.5以上の場合のみ売買を考慮
+        if meta >= 0:  # y_pred_metaが0.5以上の場合のみ売買を考慮
             if pred == 0:  # メタモデルが買いを示唆する場合
                 signals.append('buy')
             elif pred == 2:  # メタモデルが売りを示唆する場合

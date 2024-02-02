@@ -24,6 +24,7 @@ y_test = df_test['label']
 
 df_test.drop(['label'], axis=1, inplace=True)
 X_test = df_test
+# X_test.to_csv('./X_test.csv', index=False)
 
 # # データをトレーニングセットとテストセットに分割
 # train_size = int(len(data_1) * 0.2)

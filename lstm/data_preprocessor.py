@@ -82,10 +82,7 @@ def calc_ma_slope(df, timesteps=10, threshold=0.0001):
     # ラベル列の初期化
     df['label'] = 1
 
-    df['MA_50'] = df['price_close'].rolling(window=50).mean()
-
     for index, row in df.iterrows():
-        # 10個先のMA_100の傾きに基づいてラベルを設定
         if index + timesteps < len(df):
             y_values = df['MA_50'].iloc[index:index+timesteps + 1].values
             x_values = np.arange(0, len(y_values))
@@ -98,6 +95,14 @@ def calc_ma_slope(df, timesteps=10, threshold=0.0001):
                     df.at[index, 'label'] = 0  # 負の傾き
             else:
                 df.at[index, 'label'] = 1  # ほとんど傾いていない
+
+    label_0_percentage = (df['label'] == 0).mean()
+    label_1_percentage = (df['label'] == 1).mean()
+    label_2_percentage = (df['label'] == 2).mean()
+
+    print(f"label=0の割合: {label_0_percentage * 100:.2f}%")
+    print(f"label=1の割合: {label_1_percentage * 100:.2f}%")
+    print(f"label=2の割合: {label_2_percentage * 100:.2f}%")
 
     return df
 
