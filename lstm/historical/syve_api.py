@@ -15,21 +15,21 @@ class SyveApi:
         self.pool_address = pool_address
 
     def get_historical_price(self):
-        date_str = "2023-02-01:00:00Z"
-        # datetimeオブジェクトに変換
-        date_obj = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
-        # UTCタイムゾーンを設定
-        date_obj = date_obj.replace(tzinfo=timezone.utc)
-        # Unixタイムスタンプに変換
-        from_timestamp = int(date_obj.timestamp())
-
-        # # ↓ 実取引用
-        # # 現在の日時を取得
-        # now = datetime.now(timezone.utc)
-        # # 1日前の日時を計算
-        # three_days_ago = now - timedelta(days=2)
+        # date_str = "2023-02-01:00:00Z"
+        # # datetimeオブジェクトに変換
+        # date_obj = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
+        # # UTCタイムゾーンを設定
+        # date_obj = date_obj.replace(tzinfo=timezone.utc)
         # # Unixタイムスタンプに変換
-        # from_timestamp = int(three_days_ago.timestamp())
+        # from_timestamp = int(date_obj.timestamp())
+
+        # ↓ 実取引用
+        # 現在の日時を取得
+        now = datetime.now(timezone.utc)
+        # 1日前の日時を計算
+        three_days_ago = now - timedelta(days=1)
+        # Unixタイムスタンプに変換
+        from_timestamp = int(three_days_ago.timestamp())
 
         params = {
             'token_address': self.token_address,

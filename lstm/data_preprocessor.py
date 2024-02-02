@@ -82,12 +82,12 @@ def calc_ma_slope(df, timesteps=10, threshold=0.0001):
     # ラベル列の初期化
     df['label'] = 1
 
-    df['MA_100'] = df['price_close'].rolling(window=100).mean()
+    df['MA_50'] = df['price_close'].rolling(window=50).mean()
 
     for index, row in df.iterrows():
         # 10個先のMA_100の傾きに基づいてラベルを設定
         if index + timesteps < len(df):
-            y_values = df['MA_100'].iloc[index:index+11].values
+            y_values = df['MA_50'].iloc[index:index+timesteps + 1].values
             x_values = np.arange(0, len(y_values))
             slope = np.polyfit(x_values, y_values, 1)[0]  # 傾きを計算
 
