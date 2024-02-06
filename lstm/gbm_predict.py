@@ -58,4 +58,15 @@ if __name__ == '__main__':
 
     # 取引シグナルに基づいて戦略リターンを計算
     truncated_df['predicted_label'] = generate_trade_signal(y_pred_loaded, y_pred_loaded_meta) 
-    truncated_df.to_csv('predictions.csv', index=False)  # index=Falseを指定してインデックスを保存しないようにする
+
+    # df_predictのインデックスをリセット（必要に応じて）
+    df_predict.reset_index(inplace=True, drop=True)
+
+    # truncated_dfのインデックスをリセット（必要に応じて）
+    truncated_df.reset_index(inplace=True, drop=True)
+
+    # インデックスを基にして右側結合
+    merged_df = pd.concat([truncated_df, df_predict[['date_close']]], axis=1)
+
+    # 結合後のDataFrameをCSVに保存
+    merged_df.to_csv('predictions.csv', index=False)
