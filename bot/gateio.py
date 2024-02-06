@@ -75,26 +75,27 @@ import json
 
 def price_tp_sp_orders(side, now_price, ATR):
     now_price_float = float(now_price)
+    multiplier = 0.5
     if side == "buy":
-        tp_trigger_price = now_price_float + ATR * 1.5
+        tp_trigger_price = now_price_float + ATR * multiplier
         formatted_string = format(tp_trigger_price, '.4f')
-        price_trigger_order(formatted_string, rule=1)
+        price_trigger_order(formatted_string, rule=1, side=side)
 
         time.sleep(1)
 
-        sp_trigger_price = now_price_float - ATR * 1.5
+        sp_trigger_price = now_price_float - ATR * multiplier
         formatted_string = format(sp_trigger_price, '.4f')
-        price_trigger_order(formatted_string, rule=2)
+        price_trigger_order(formatted_string, rule=2, side=side)
     else:
-        tp_trigger_price = now_price_float - ATR * 1.5
+        tp_trigger_price = now_price_float - ATR * multiplier
         formatted_string = format(tp_trigger_price, '.4f')
-        price_trigger_order(formatted_string, rule=2)
+        price_trigger_order(formatted_string, rule=2, side=side)
 
         time.sleep(1)
 
-        sp_trigger_price = now_price_float + ATR * 1.5
+        sp_trigger_price = now_price_float + ATR * multiplier
         formatted_string = format(sp_trigger_price, '.4f')
-        price_trigger_order(formatted_string, rule=1)
+        price_trigger_order(formatted_string, rule=1, side=side)
     
 
 def price_trigger_order(trigger_price, rule=1, side="buy"):
@@ -169,6 +170,7 @@ def list_price_orders():
     sign_headers = gen_sign('GET', prefix + url, query_param)
     headers.update(sign_headers)
     r = requests.request('GET', host + prefix + url + "?" + query_param, headers=headers)
+    print(r.json())
 
 def cancel_price_orders():
     host = "https://api.gateio.ws"
@@ -194,8 +196,6 @@ def get_side_from_predictions():
         return last_predicted_value, ATR
 
 if __name__ == "__main__":
-    cancel_price_orders()
-    exit()
     side, ATR = get_side_from_predictions()
     now_mark_price = get_mark_price()
     print(side)
@@ -214,19 +214,21 @@ if __name__ == "__main__":
     now_position_size = get_position_size()
     if side == "buy" and now_position_size > 0:
         print("buy hold")
-        cancel_price_orders()
-        time.sleep(1)
-        price_tp_sp_orders(side, now_mark_price, ATR)
+        # cancel_price_orders()
+        # time.sleep(1)
+        # price_tp_sp_orders(side, now_mark_price, ATR)
         exit()
     if side == "sell" and now_position_size < 0:
         print("sell hold")
-        cancel_price_orders()
-        time.sleep(1)
-        price_tp_sp_orders(side, now_mark_price, ATR)
+        # cancel_price_orders()
+        # time.sleep(1)
+        # price_tp_sp_orders(side, now_mark_price, ATR)
         exit()
 
     if side == "buy" and now_position_size <= 0:
         close_position()
+        time.sleep(1)
+        cancel_price_orders()
         time.sleep(1)
         print("buy open")
         open_position(side)
@@ -236,6 +238,8 @@ if __name__ == "__main__":
     
     if side == "sell" and now_position_size >= 0:
         close_position()
+        time.sleep(1)
+        cancel_price_orders()
         time.sleep(1)
         print("sell open")
         open_position(side)
