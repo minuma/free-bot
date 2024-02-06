@@ -3,12 +3,12 @@ import json
 from datetime import datetime
 
 def load_data(is_validation=False, is_backtest=False, is_trade=False):
-    file_path = './lstm/historical/csv/10m/matic/historical_price_20231101.json'
+    file_path = './lstm/historical/csv/10m/matic/historical_price_20231201.json'
     # file_path = './lstm/historical/csv/historical_price.json'
     if is_validation:
-        file_path = './lstm/historical/csv/10m/matic/historical_price_20231201.json'
-    if is_backtest:
         file_path = './lstm/historical/csv/10m/matic/historical_price_20240101.json'
+    if is_backtest:
+        file_path = './lstm/historical/csv/10m/matic/historical_price_20240120.json'
         # file_path = './lstm/historical/csv/historical_price.json'
     if is_trade:
         file_path = './lstm/historical/csv/historical_price.json'
