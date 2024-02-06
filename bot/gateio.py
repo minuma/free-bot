@@ -98,8 +98,8 @@ def get_position_size():
 
 def get_side_from_predictions():
     df = pd.read_csv('./predictions.csv')
-    last_predicted_value = df['predicted_label'].iloc[-2]
-    diff_price_close = df['diff_MA_9'].iloc[-2]
+    last_predicted_value = df['predicted_label'].iloc[-3]
+    diff_price_close = df['diff_MA_9'].iloc[-3]
     # diff_VWAP = df['diff_VWAP'].iloc[-2]
     if diff_price_close == 0:
         return 'close'

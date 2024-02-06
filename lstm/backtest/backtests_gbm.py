@@ -23,9 +23,9 @@ def generate_trade_signal(y_pred, y_pred_meta):
     mean_value = np.mean(y_pred_meta)
     for pred, meta in zip(predicted_labels, y_pred_meta):
         if meta >= 0:  # y_pred_metaが0.5以上の場合のみ売買を考慮
-            if pred == 0:  # メタモデルが買いを示唆する場合
+            if pred == 2:  # メタモデルが買いを示唆する場合
                 signals.append('buy')
-            elif pred == 2:  # メタモデルが売りを示唆する場合
+            elif pred == 0:  # メタモデルが売りを示唆する場合
                 signals.append('sell')
             else:
                 signals.append('hold')
@@ -39,11 +39,11 @@ def calculate_strategy_return(signals, market_returns):
     position = 0  # 初期ポジション
 
     for i in range(1, len(signals)):
-        if signals.iloc[i-1] == 'buy':
+        if signals.iloc[i-2] == 'buy':
             position = 1
-        elif signals.iloc[i-1] == 'sell':
+        elif signals.iloc[i-2] == 'sell':
             position = -1
-        elif signals.iloc[i-1] == 'hold':
+        elif signals.iloc[i-2] == 'hold':
             # 'hold'の場合、前回のポジションを維持
             position = 0
 
@@ -56,7 +56,7 @@ def calculate_strategy_return(signals, market_returns):
 if __name__ == '__main__':
     # データの読み込み
     # with open('lstm/historical/csv/historical_price.json', 'r') as file:
-    with open('lstm/historical/csv/10m/matic/historical_price_20240101.json', 'r') as file:
+    with open('lstm/historical/csv/2h/historical_price_20230801.json', 'r') as file:
         data = json.load(file)
 
     # Pandas DataFrameに変換
@@ -116,6 +116,13 @@ if __name__ == '__main__':
     plt.figure(figsize=(12, 6))
     plt.plot(truncated_df['date_close'], truncated_df['cumulative_market_return'], label='Market Return', color='red')
     plt.plot(truncated_df['date_close'], truncated_df['cumulative_strategy_return'], label='Strategy Return', color='blue')
+
+   # 買いシグナルと売りシグナルのプロット
+    buy_dates = truncated_df.loc[truncated_df['trade_signal'] == 'buy', 'date_close']
+    sell_dates = truncated_df.loc[truncated_df['trade_signal'] == 'sell', 'date_close']
+    plt.scatter(buy_dates, truncated_df.loc[truncated_df['trade_signal'] == 'buy', 'cumulative_strategy_return'], label='Buy Signal', marker='^', color='green')
+    plt.scatter(sell_dates, truncated_df.loc[truncated_df['trade_signal'] == 'sell', 'cumulative_strategy_return'], label='Sell Signal', marker='v', color='black')
+
     plt.legend()
     plt.xlabel('Date')
     plt.ylabel('Cumulative Return')

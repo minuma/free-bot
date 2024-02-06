@@ -16,20 +16,20 @@ df_1.drop(['label'], axis=1, inplace=True)
 X_1 = df_1
 
 
-##  Test
-data_test = load_data(is_validation=True)
+# ##  Test
+# data_test = load_data(is_validation=True)
 
-df_test = shape_data(data_test, is_gbm=True)
-y_test = df_test['label']
+# df_test = shape_data(data_test, is_gbm=True)
+# y_test = df_test['label']
 
-df_test.drop(['label'], axis=1, inplace=True)
-X_test = df_test
+# df_test.drop(['label'], axis=1, inplace=True)
+# X_test = df_test
 # X_test.to_csv('./X_test.csv', index=False)
 
-# # データをトレーニングセットとテストセットに分割
-# train_size = int(len(data_1) * 0.2)
-# X_train, X_test = X_1[:train_size], X_1[train_size:]
-# y_train, y_test = y_1[:train_size], y_1[train_size:]
+# データをトレーニングセットとテストセットに分割
+train_size = int(len(data_1) * 0.2)
+X_train, X_test = X_1[:train_size], X_1[train_size:]
+y_train, y_test = y_1[:train_size], y_1[train_size:]
 
 # LightGBMのパラメータ設定
 params = {
@@ -56,7 +56,7 @@ params = {
 }
 
 # データセットの作成
-train_data = lgb.Dataset(X_1, label=y_1)
+train_data = lgb.Dataset(X_train, label=y_train)
 test_data = lgb.Dataset(X_test, label=y_test, reference=train_data)
 
 # モデルのトレーニング

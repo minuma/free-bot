@@ -9,6 +9,8 @@ import pandas as pd
 def shape_data(df, timesteps=20, is_predict=False, is_gbm=False):
     # 移動平均、乖離度などの特徴量の計算
     df['MA_9'] = df['price_close'].rolling(window=9).mean()
+    df['MA_20'] = df['price_close'].rolling(window=20).mean()
+    df['MA_30'] = df['price_close'].rolling(window=30).mean()
     df['MA_50'] = df['price_close'].rolling(window=50).mean()
     df['MA_100'] = df['price_close'].rolling(window=100).mean()
     df = calculate_divergence_max(df)
@@ -17,23 +19,24 @@ def shape_data(df, timesteps=20, is_predict=False, is_gbm=False):
     df['VWAP'] = calculate_vwap(df)
     df['MFI'] = calculate_mfi(df)
     df['Volume_Oscillator'] = calculate_volume_oscillator(df)
+    df['ATR'] = calc_ATR(df)
     # トリプルバリアの適用
     if is_gbm:
         # df = set_labels_based_on_past_data(df, look_back_period=10, ptSl=0.01)
         # df = set_triple_barrier(df, take_profit=0.01, stop_loss=-0.01, time_horizon=10)
-        df = calc_ma_slope(df, timesteps=5)
+        df = calc_ma_slope(df, timesteps=2, threshold=0.0001)
     else:
         df = set_triple_barrier(df, take_profit=0.01, stop_loss=-0.01, time_horizon=10)
 
     # 差分の計算
-    columns_to_diff = ['price_close', 'MA_9', 'MA_50', 'MA_100', 'OBV', 'VWAP', 'divergence']
+    columns_to_diff = ['price_close', 'MA_9', 'MA_20', 'MA_30', 'MA_50', 'MA_100', 'OBV', 'VWAP', 'divergence']
     for col in columns_to_diff:
         df[f'diff_{col}'] = df[col].diff()
     df.dropna(inplace=True)
 
     # 指定された列について異常値を検出し、置き換え
     # max divergenceは未来の値を含んでいるので注意
-    columns = ['price_close', 'diff_MA_100', 'diff_MA_50', 'diff_MA_9', 'diff_divergence', 'divergence', 'OBV', 'VWAP', 'MFI', 'Volume_Oscillator']
+    columns = ['price_close', 'diff_MA_100', 'diff_MA_50', 'diff_MA_30', 'diff_MA_20', 'diff_MA_9', 'diff_divergence', 'divergence', 'OBV', 'VWAP', 'MFI', 'Volume_Oscillator']
     if not is_gbm:
         for col in columns:
             replace_outliers_with_median(df, col)
@@ -84,7 +87,7 @@ def calc_ma_slope(df, timesteps=10, threshold=0.0001):
 
     for index, row in df.iterrows():
         if index + timesteps < len(df):
-            y_values = df['MA_50'].iloc[index:index+timesteps + 1].values
+            y_values = df['MA_30'].iloc[index:index+timesteps + 1].values
             x_values = np.arange(0, len(y_values))
             slope = np.polyfit(x_values, y_values, 1)[0]  # 傾きを計算
 
@@ -106,6 +109,17 @@ def calc_ma_slope(df, timesteps=10, threshold=0.0001):
 
     return df
 
+def calc_ATR(df_raw, period=14):
+    # 真の範囲 (TR) を計算
+    df = df_raw.copy()
+    df['High-Low'] = df['price_high'] - df['price_low']
+    df['High-Prev Close'] = abs(df['price_high'] - df['price_close'].shift(1))
+    df['Low-Prev Close'] = abs(df['price_low'] - df['price_close'].shift(1))
+
+    df['TR'] = df[['High-Low', 'High-Prev Close', 'Low-Prev Close']].max(axis=1)
+
+    # ATR を計算 (例えば20日間平均)
+    return df['TR'].rolling(window=period).mean()
 
 def set_triple_barrier(df, take_profit, stop_loss, time_horizon):
     # ラベル列の初期化

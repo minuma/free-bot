@@ -27,14 +27,14 @@ class SyveApi:
         # 現在の日時を取得
         now = datetime.now(timezone.utc)
         # 1日前の日時を計算
-        three_days_ago = now - timedelta(days=1)
+        three_days_ago = now - timedelta(days=30)
         # Unixタイムスタンプに変換
         from_timestamp = int(three_days_ago.timestamp())
 
         params = {
             'token_address': self.token_address,
             'pool_address': self.pool_address,
-            'interval': '10m',
+            'interval': '2h',
             'max_size': 2500,
             'fill': True,
             'key': os.getenv('SYVE_API_KEY'),
