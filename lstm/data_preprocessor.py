@@ -26,7 +26,7 @@ def shape_data(df, timesteps=20, is_predict=False, is_gbm=False):
         # df = set_labels_based_on_past_data(df, look_back_period=10, ptSl=0.01)
         # df = set_triple_barrier(df, take_profit=0.01, stop_loss=-0.01, time_horizon=10)
         # df = calc_ma_slope(df, timesteps=2, threshold=0.0001)
-        df = set_labels_based_on_ATR(df, look_forward_period=7, atr_multiplier_tp=4, atr_multiplier_sl=2)
+        df = set_labels_based_on_ATR(df, look_forward_period=30, atr_multiplier_tp=4, atr_multiplier_sl=2)
     else:
         # df = set_triple_barrier(df, take_profit=0.01, stop_loss=-0.01, time_horizon=10)
         df = set_labels_based_on_ATR(df, look_forward_period=10, atr_multiplier_tp=4, atr_multiplier_sl=2)
@@ -214,6 +214,14 @@ def set_labels_based_on_ATR(df, look_forward_period, atr_multiplier_tp=4, atr_mu
                 break
         else:
             df.at[index, 'label'] = 1  # その他（利益確定や損切りの条件を満たさない）
+
+    label_0_percentage = (df['label'] == 0).mean()
+    label_1_percentage = (df['label'] == 1).mean()
+    label_2_percentage = (df['label'] == 2).mean()
+
+    print(f"label=0の割合: {label_0_percentage * 100:.2f}%")
+    print(f"label=1の割合: {label_1_percentage * 100:.2f}%")
+    print(f"label=2の割合: {label_2_percentage * 100:.2f}%")
 
     return df
 
