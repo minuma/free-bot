@@ -26,7 +26,7 @@ def shape_data(df, timesteps=20, is_predict=False, is_gbm=False):
         # df = set_labels_based_on_past_data(df, look_back_period=10, ptSl=0.01)
         # df = set_triple_barrier(df, take_profit=0.01, stop_loss=-0.01, time_horizon=10)
         # df = calc_ma_slope(df, timesteps=2, threshold=0.0001)
-        df = set_labels_based_on_ATR(df, look_forward_period=14, atr_multiplier_tp=4, atr_multiplier_sl=2)
+        df = set_labels_based_on_ATR(df, look_forward_period=7, atr_multiplier_tp=4, atr_multiplier_sl=2)
     else:
         # df = set_triple_barrier(df, take_profit=0.01, stop_loss=-0.01, time_horizon=10)
         df = set_labels_based_on_ATR(df, look_forward_period=10, atr_multiplier_tp=4, atr_multiplier_sl=2)
@@ -192,7 +192,7 @@ def set_triple_barrier(df, take_profit, stop_loss, time_horizon):
     return df
 
 def set_labels_based_on_ATR(df, look_forward_period, atr_multiplier_tp=4, atr_multiplier_sl=2):
-    df['label'] = -1  # 未定義の状態を表す初期値
+    df['label'] = 1  # 未定義の状態を表す初期値
 
     for index in range(len(df) - look_forward_period):
         base_price = df.iloc[index]['price_close']  # 基準となる現在の価格
