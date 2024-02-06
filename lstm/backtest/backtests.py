@@ -16,7 +16,7 @@ from lstm.data_preprocessor import shape_data
 def generate_trade_signal(y_pred, meta_predictions):
     signals = []
     for pred, meta_pred in zip(y_pred, meta_predictions):
-        if meta_pred > 0.30:  # メタモデルが取引を示唆する場合
+        if meta_pred > 0.5:  # メタモデルが取引を示唆する場合
             if pred[0] > pred[2]:  # 1次モデルが「買い」を示唆する場合
                 signals.append('buy')
             elif pred[2] > pred[0]:  # 1次モデルが「売り」を示唆する場合
@@ -28,19 +28,20 @@ def generate_trade_signal(y_pred, meta_predictions):
     return signals
 
 def calculate_strategy_return(signals, market_returns):
-    strategy_returns = []
-    position = 0  # 現在のポジション（買い=1、売り=-1、ホールド=0）
+    strategy_returns = [0]  # 初期値は0、最初のエントリでリターンはない
+    position = 0  # 初期ポジション
 
-    for signal, market_return in zip(signals, market_returns):
-        if signal == 'buy':
+    for i in range(1, len(signals)):
+        if signals.iloc[i-1] == 'buy':
             position = 1
-        elif signal == 'sell':
+        elif signals.iloc[i-1] == 'sell':
             position = -1
-        else:
+        elif signals.iloc[i-1] == 'hold':
+            # 'hold'の場合、前回のポジションを維持
             position = 0
 
-        # 戦略リターンは市場リターンとポジションに依存する
-        strategy_return = market_return * position
+        # 戦略リターンは1個遅れた市場リターンとポジションに依存する
+        strategy_return = market_returns.iloc[i] * position
         strategy_returns.append(strategy_return)
 
     return strategy_returns
@@ -48,7 +49,7 @@ def calculate_strategy_return(signals, market_returns):
 
 if __name__ == '__main__':
     # データの読み込み
-    with open('lstm/historical/csv/10m/historical_price_20230301.json', 'r') as file:
+    with open('lstm/historical/csv/10m/historical_price_20240101.json', 'r') as file:
         data = json.load(file)
 
     # Pandas DataFrameに変換

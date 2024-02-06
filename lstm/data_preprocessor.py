@@ -24,9 +24,11 @@ def shape_data(df, timesteps=20, is_predict=False, is_gbm=False):
     if is_gbm:
         # df = set_labels_based_on_past_data(df, look_back_period=10, ptSl=0.01)
         # df = set_triple_barrier(df, take_profit=0.01, stop_loss=-0.01, time_horizon=10)
-        df = calc_ma_slope(df, timesteps=2, threshold=0.0001)
+        # df = calc_ma_slope(df, timesteps=2, threshold=0.0001)
+        df = set_labels_based_on_ATR(df, look_back_period=10, atr_multiplier_tp=4, atr_multiplier_sl=2)
     else:
-        df = set_triple_barrier(df, take_profit=0.01, stop_loss=-0.01, time_horizon=10)
+        # df = set_triple_barrier(df, take_profit=0.01, stop_loss=-0.01, time_horizon=10)
+        df = set_labels_based_on_ATR(df, look_back_period=10, atr_multiplier_tp=4, atr_multiplier_sl=2)
 
     # 差分の計算
     columns_to_diff = ['price_close', 'MA_9', 'MA_20', 'MA_30', 'MA_50', 'MA_100', 'OBV', 'VWAP', 'divergence']
@@ -36,7 +38,19 @@ def shape_data(df, timesteps=20, is_predict=False, is_gbm=False):
 
     # 指定された列について異常値を検出し、置き換え
     # max divergenceは未来の値を含んでいるので注意
-    columns = ['price_close', 'diff_MA_100', 'diff_MA_50', 'diff_MA_30', 'diff_MA_20', 'diff_MA_9', 'diff_divergence', 'divergence', 'OBV', 'VWAP', 'MFI', 'Volume_Oscillator']
+    columns = ['price_close',
+               'diff_MA_100',
+               'diff_MA_50',
+               'diff_MA_30',
+               'diff_MA_20',
+               'diff_MA_9',
+               'divergence',
+               'OBV',
+               'VWAP',
+               'MFI',
+               'Volume_Oscillator',
+               'ATR',
+    ]
     if not is_gbm:
         for col in columns:
             replace_outliers_with_median(df, col)
@@ -157,16 +171,17 @@ def set_triple_barrier(df, take_profit, stop_loss, time_horizon):
 
     return df
 
-def set_labels_based_on_past_data(df, look_back_period, ptSl):
+def set_labels_based_on_ATR(df, look_back_period, atr_multiplier_tp=4, atr_multiplier_sl=2):
     df['label'] = 1  # 初期値を設定（-1は未定義を意味する）
 
     for index in range(look_back_period, len(df)):
         # look_back_period前の価格を基準価格とする
         base_price = df.iloc[index - look_back_period]['price_close']
+        atr_value = df.iloc[index]['ATR']  # 現在のATR値を取得
 
-        # 利益確定（Take Profit）と損切り（Stop Loss）の閾値を設定
-        take_profit_threshold = base_price * (1 + ptSl)
-        stop_loss_threshold = base_price * (1 - ptSl)
+        # 利益確定（Take Profit）と損切り（Stop Loss）の閾値を設定（ATRを基に）
+        take_profit_threshold = base_price + (atr_value * atr_multiplier_tp)
+        stop_loss_threshold = base_price - (atr_value * atr_multiplier_sl)
 
         # 現在から過去look_back_period間のデータで利益確定や損切りが発生したか確認
         for past_index in range(index - look_back_period + 1, index + 1):
@@ -182,8 +197,6 @@ def set_labels_based_on_past_data(df, look_back_period, ptSl):
             df.at[index, 'label'] = 1  # その他（利益確定や損切りの条件を満たさない）
 
     return df
-
-
 
 
 def calculate_divergence_max(df):

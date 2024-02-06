@@ -24,12 +24,12 @@ def train():
     # 早期停止の設定
     early_stopping = EarlyStopping(
         monitor='val_loss',
-        patience=1,
+        patience=10,
         restore_best_weights=True  # 最も良いモデルの重みを復元
     )
 
     # モデルの訓練（検証セットを含む）
-    model.fit(X_seq, y_seq, validation_data=(X_seq_val, y_seq_val), epochs=1, callbacks=[early_stopping])
+    model.fit(X_seq, y_seq, validation_data=(X_seq_val, y_seq_val), epochs=20, callbacks=[early_stopping])
 
     # モデルの保存
     model.save('./models/lstm_model.h5')
@@ -181,7 +181,7 @@ def train_meta_model():
     )
 
     # メタラベルモデルの訓練
-    meta_label_model.fit(X_train, y_train, validation_data=(X_val, y_val), epochs=1, callbacks=[early_stopping])
+    meta_label_model.fit(X_train, y_train, validation_data=(X_val, y_val), epochs=20, callbacks=[early_stopping])
 
     # モデルの保存
     meta_label_model.save('./models/meta_label_model.h5')

@@ -39,11 +39,11 @@ def calculate_strategy_return(signals, market_returns):
     position = 0  # 初期ポジション
 
     for i in range(1, len(signals)):
-        if signals.iloc[i-2] == 'buy':
+        if signals.iloc[i-1] == 'buy':
             position = 1
-        elif signals.iloc[i-2] == 'sell':
+        elif signals.iloc[i-1] == 'sell':
             position = -1
-        elif signals.iloc[i-2] == 'hold':
+        elif signals.iloc[i-1] == 'hold':
             # 'hold'の場合、前回のポジションを維持
             position = 0
 
@@ -56,7 +56,7 @@ def calculate_strategy_return(signals, market_returns):
 if __name__ == '__main__':
     # データの読み込み
     # with open('lstm/historical/csv/historical_price.json', 'r') as file:
-    with open('lstm/historical/csv/2h/historical_price_20230801.json', 'r') as file:
+    with open('lstm/historical/csv/10m/historical_price_20240101.json', 'r') as file:
         data = json.load(file)
 
     # Pandas DataFrameに変換
