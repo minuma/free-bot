@@ -20,15 +20,16 @@ def shape_data(df, timesteps=20, is_predict=False, is_gbm=False):
     df['MFI'] = calculate_mfi(df)
     df['Volume_Oscillator'] = calculate_volume_oscillator(df)
     df['ATR'] = calc_ATR(df)
+    # df['dynamic_look_back_period'] = calculate_dynamic_look_back_period(df, 'ATR', 5, 30)
     # トリプルバリアの適用
     if is_gbm:
         # df = set_labels_based_on_past_data(df, look_back_period=10, ptSl=0.01)
         # df = set_triple_barrier(df, take_profit=0.01, stop_loss=-0.01, time_horizon=10)
         # df = calc_ma_slope(df, timesteps=2, threshold=0.0001)
-        df = set_labels_based_on_ATR(df, look_back_period=10, atr_multiplier_tp=4, atr_multiplier_sl=2)
+        df = set_labels_based_on_ATR(df, look_forward_period=14, atr_multiplier_tp=4, atr_multiplier_sl=2)
     else:
         # df = set_triple_barrier(df, take_profit=0.01, stop_loss=-0.01, time_horizon=10)
-        df = set_labels_based_on_ATR(df, look_back_period=10, atr_multiplier_tp=4, atr_multiplier_sl=2)
+        df = set_labels_based_on_ATR(df, look_forward_period=10, atr_multiplier_tp=4, atr_multiplier_sl=2)
 
     # 差分の計算
     columns_to_diff = ['price_close', 'MA_9', 'MA_20', 'MA_30', 'MA_50', 'MA_100', 'OBV', 'VWAP', 'divergence']
@@ -135,6 +136,25 @@ def calc_ATR(df_raw, period=14):
     # ATR を計算 (例えば20日間平均)
     return df['TR'].rolling(window=period).mean()
 
+# def calculate_dynamic_look_back_period(df, atr_column='ATR', min_period=5, max_period=20):
+#     """
+#     ATR値に基づいて動的なlook_back_periodを計算する関数
+
+#     :param df: データフレーム、ATR列を含む
+#     :param atr_column: ATR値を含む列の名前
+#     :param min_period: 最小のlook_back_period
+#     :param max_period: 最大のlook_back_period
+#     :return: 各行に対する動的なlook_back_periodのリスト
+#     """
+#     # ATR値を基にした正規化や変換ロジックを適用
+#     normalized_atr = (df[atr_column] - df[atr_column].min()) / (df[atr_column].max() - df[atr_column].min())
+
+#     # 正規化されたATR値を使用して期間を動的に調整
+#     dynamic_period = min_period + (1 - normalized_atr) * (max_period - min_period)
+
+#     return dynamic_period.astype(int)
+
+
 def set_triple_barrier(df, take_profit, stop_loss, time_horizon):
     # ラベル列の初期化
     df['label'] =  1
@@ -171,26 +191,25 @@ def set_triple_barrier(df, take_profit, stop_loss, time_horizon):
 
     return df
 
-def set_labels_based_on_ATR(df, look_back_period, atr_multiplier_tp=4, atr_multiplier_sl=2):
-    df['label'] = 1  # 初期値を設定（-1は未定義を意味する）
+def set_labels_based_on_ATR(df, look_forward_period, atr_multiplier_tp=4, atr_multiplier_sl=2):
+    df['label'] = -1  # 未定義の状態を表す初期値
 
-    for index in range(look_back_period, len(df)):
-        # look_back_period前の価格を基準価格とする
-        base_price = df.iloc[index - look_back_period]['price_close']
+    for index in range(len(df) - look_forward_period):
+        base_price = df.iloc[index]['price_close']  # 基準となる現在の価格
         atr_value = df.iloc[index]['ATR']  # 現在のATR値を取得
 
-        # 利益確定（Take Profit）と損切り（Stop Loss）の閾値を設定（ATRを基に）
+        # 利益確定（Take Profit）と損切り（Stop Loss）の閾値を設定
         take_profit_threshold = base_price + (atr_value * atr_multiplier_tp)
         stop_loss_threshold = base_price - (atr_value * atr_multiplier_sl)
 
-        # 現在から過去look_back_period間のデータで利益確定や損切りが発生したか確認
-        for past_index in range(index - look_back_period + 1, index + 1):
-            past_price = df.iloc[past_index]['price_close']
+        # 未来のlook_forward_period間のデータで利益確定や損切りが発生したか確認
+        for future_index in range(index + 1, index + look_forward_period + 1):
+            future_price = df.iloc[future_index]['price_close']
 
-            if past_price >= take_profit_threshold:
+            if future_price >= take_profit_threshold:
                 df.at[index, 'label'] = 2  # 利益確定の条件を満たす
                 break
-            elif past_price <= stop_loss_threshold:
+            elif future_price <= stop_loss_threshold:
                 df.at[index, 'label'] = 0  # 損切りの条件を満たす
                 break
         else:
