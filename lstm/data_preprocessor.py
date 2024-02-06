@@ -26,6 +26,8 @@ def shape_data(df, timesteps=20, is_predict=False, is_gbm=False):
         # df = set_labels_based_on_past_data(df, look_back_period=10, ptSl=0.01)
         # df = set_triple_barrier(df, take_profit=0.01, stop_loss=-0.01, time_horizon=10)
         # df = calc_ma_slope(df, timesteps=2, threshold=0.0001)
+
+        # 良い感じの値: 20, 1.5, 1.5  ラベルが30%ずつに分かれる
         df = set_labels_based_on_ATR(df, look_forward_period=20, atr_multiplier_tp=1.5, atr_multiplier_sl=1.5)
     else:
         # df = set_triple_barrier(df, take_profit=0.01, stop_loss=-0.01, time_horizon=10)
