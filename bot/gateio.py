@@ -99,6 +99,7 @@ def price_tp_sp_orders(side, now_price, ATR):
     
 
 def price_trigger_order(trigger_price, rule=1, side="buy"):
+    # https://www.gate.io/docs/developers/apiv4/#create-a-price-triggered-order-2
     host = "https://api.gateio.ws"
     prefix = "/api/v4"
     url = '/futures/usdt/price_orders'
@@ -121,7 +122,7 @@ def price_trigger_order(trigger_price, rule=1, side="buy"):
         },
         "trigger": {
             "strategy_type": 0,
-            "price_type": 1,
+            "price_type": 0,
             "price": trigger_price,
             "rule": rule, # tp, slで方向を変える
             "expiration": 0
