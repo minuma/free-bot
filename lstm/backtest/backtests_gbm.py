@@ -54,18 +54,6 @@ def calculate_strategy_return(signals, market_returns):
     return strategy_returns
 
 if __name__ == '__main__':
-    # データの読み込み
-    # with open('lstm/historical/csv/historical_price.json', 'r') as file:
-    with open('lstm/historical/csv/10m/matic/historical_price_20240120.json', 'r') as file:
-        data = json.load(file)
-
-    # Pandas DataFrameに変換
-    df_raw = pd.DataFrame(data['data'])
-
-    # 日付列をDatetime型に変換
-    df_raw['date_open'] = pd.to_datetime(df_raw['date_open'])
-    df_raw['date_close'] = pd.to_datetime(df_raw['date_close'])
-
     # バックテストのロジック（ここでは単純な例を使用）
     # 例: 移動平均を基にシグナルを生成
     df_predict = load_data(is_backtest=True)
@@ -75,8 +63,7 @@ if __name__ == '__main__':
     df.drop(['label'], axis=1, inplace=True)
 
     truncated_df = df.copy()
-    truncated_df['date_open'] = df_raw['date_open']
-    truncated_df['date_close'] = df_raw['date_close']
+    truncated_df['date_close'] = df_predict['date_close']
 
     X = df
 
