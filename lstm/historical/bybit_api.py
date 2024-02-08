@@ -7,7 +7,7 @@ import pandas as pd
 url = "https://api.bybit.com/v5/market/kline"
 symbol = "MATICUSDT"
 category = "linear"
-interval = 15
+interval = 30
 
 # 特定の開始日を設定（例：2023年1月1日）
 start_date_str = "2024-01-01"
