@@ -19,6 +19,10 @@ def load_bybit_data(is_validation=False, is_backtest=False, is_trade=False):
         file_path = './lstm/historical/csv/historical_price.csv'
     # JSONファイルからデータを読み込む
     data = pd.read_csv(file_path)
+    # data['price_high'] *= 100
+    # data['price_low'] *= 100
+    # data['price_close'] *= 100
+    # data['price_open'] *= 100
     return data
 
 def load_syve_data(is_validation=False, is_backtest=False, is_trade=False):
