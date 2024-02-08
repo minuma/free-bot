@@ -204,7 +204,7 @@ if __name__ == "__main__":
     side, ATR = get_side_from_predictions()
     now_mark_price = get_mark_price()
     print(side)
-    size = calculate_position_size(1, 10, ATR, now_mark_price)
+    size = calculate_position_size(0.5, 10, ATR, now_mark_price)
     if side == "hold":
         print("hold")
         close_position()
@@ -239,7 +239,7 @@ if __name__ == "__main__":
         print("buy open")
         open_position(side, size)
         time.sleep(1)
-        price_tp_sp_orders(side, now_mark_price, ATR)
+        # price_tp_sp_orders(side, now_mark_price, ATR)
         exit()
     
     if side == "sell" and now_position_size >= 0:
@@ -250,5 +250,5 @@ if __name__ == "__main__":
         print("sell open")
         open_position(side, size)
         time.sleep(1)
-        price_tp_sp_orders(side, now_mark_price, ATR)
+        # price_tp_sp_orders(side, now_mark_price, ATR)
         exit()

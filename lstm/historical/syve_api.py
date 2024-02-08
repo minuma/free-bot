@@ -27,7 +27,7 @@ class SyveApi:
         # 現在の日時を取得
         now = datetime.now(timezone.utc)
         # 1日前の日時を計算
-        three_days_ago = now - timedelta(days=7)
+        three_days_ago = now - timedelta(hours=20)
         # Unixタイムスタンプに変換
         from_timestamp = int(three_days_ago.timestamp())
 

@@ -1,0 +1,69 @@
+from datetime import datetime, timedelta
+import time
+import requests
+import pandas as pd
+
+
+url = "https://api.bybit.com/v5/market/kline"
+symbol = "MATICUSDT"
+category = "linear"
+interval = 15
+
+# 特定の開始日を設定（例：2023年1月1日）
+start_date_str = "2023-01-01"
+start_date = datetime.strptime(start_date_str, "%Y-%m-%d")
+
+# 1ヶ月後の日付を計算
+end_date = start_date + timedelta(days=2)
+
+# UNIXタイムスタンプに変換
+start_timestamp = int(start_date.timestamp())
+end_timestamp = int(end_date.timestamp())
+
+values = []
+
+# 終了タイムスタンプを超えないようにする
+current_start_timestamp = start_timestamp
+while current_start_timestamp < end_timestamp:
+    params = {
+        "symbol": symbol,
+        "interval": interval,
+        "category": category,
+        "start": current_start_timestamp * 1000,
+        "end": min((current_start_timestamp + 200 * 60 * interval) * 1000, end_timestamp * 1000),
+        "limit": 200
+    }
+
+    response = requests.get(url, params=params)
+    response_data = response.json()
+
+    if len(response_data["result"]["list"]) == 0:
+        break
+
+    values += response_data["result"]["list"]
+    # 最後のデータのタイムスタンプを新しい開始点として設定
+    last_timestamp = int(values[-1][0]) 
+    current_start_timestamp = last_timestamp
+
+data = pd.DataFrame(values)
+
+# カラム名を修正
+data.columns = [
+    "timestamp",
+    "price_open",
+    "price_high",
+    "price_low",
+    "price_close",
+    "volume",
+    "turnover"
+]
+# タイムスタンプをdatetime型に変換
+data["date_close"] = (data['timestamp'].astype(int)/1000).apply(datetime.fromtimestamp)
+data['date_close'] = pd.to_datetime(data['date_close']) + pd.Timedelta(hours=9)
+# 昇順に並び替え
+data.sort_values("date_close", inplace=True)
+
+# # "datetime"をインデックスに設定
+# data.set_index("datetime", inplace=True)
+
+data.to_csv(f"bybit_{symbol}_{category}_{interval}_{start_date_str}_to_{end_date.strftime('%Y-%m-%d')}.csv", index=False)
