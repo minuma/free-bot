@@ -30,7 +30,7 @@ def generate_trade_signal(y_pred, y_pred_meta):
 
 
 if __name__ == '__main__':
-    df_predict = load_data(is_trade=True)
+    df_predict = load_data(is_trade=True, is_bybit=True)
     df = shape_data(df_predict, is_gbm=True)
 
     # モデルをファイルからロード

@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 contract = "MATIC_USDT"
-multiplier = 0.5 # ATRの何倍でTP, SPを設定するか
+multiplier = 1.5 # ATRの何倍でTP, SPを設定するか
 
 def gen_sign(method, url, query_string=None, payload_string=None):
     key = os.getenv('GATE_IO_API_KEY')        # api_key
@@ -187,9 +187,9 @@ def cancel_price_orders():
 
 def get_side_from_predictions():
     df = pd.read_csv('./predictions.csv')
-    last_predicted_value = df['predicted_label'].iloc[-2]
-    diff_price_close = df['diff_MA_9'].iloc[-2]
-    ATR = df['ATR'].iloc[-2]
+    last_predicted_value = df['predicted_label'].iloc[-1]
+    diff_price_close = df['diff_MA_9'].iloc[-1]
+    ATR = df['ATR'].iloc[-1]
     # diff_VWAP = df['diff_VWAP'].iloc[-2]
     if diff_price_close == 0:
         return 'close', ATR

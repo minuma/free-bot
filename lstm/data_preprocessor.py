@@ -43,16 +43,23 @@ def shape_data(df, timesteps=20, is_predict=False, is_gbm=False):
     # max divergenceは未来の値を含んでいるので注意
     columns = ['price_close',
                'diff_MA_100',
+               'MA_100',
                'diff_MA_50',
+               'MA_50',
                'diff_MA_30',
+               'MA_30',
                'diff_MA_20',
+               'MA_20',
                'diff_MA_9',
+               'MA_9',
                'divergence',
                'OBV',
-            #    'VWAP',
+               'VWAP',
                'MFI',
                'Volume_Oscillator',
                'ATR',
+            #    'volume',
+            #    'turnover',
     ]
     if not is_gbm:
         for col in columns:
