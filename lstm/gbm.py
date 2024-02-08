@@ -7,7 +7,7 @@ from data_preprocessor import shape_data
 
 
 ## Train 
-data_1 = load_data()
+data_1 = load_data(is_bybit=True)
 
 df_1 = shape_data(data_1, is_gbm=True)
 y_1 = df_1['label']
@@ -17,7 +17,7 @@ X_1 = df_1
 
 
 ##  Test
-data_test = load_data(is_validation=True)
+data_test = load_data(is_validation=True, is_bybit=True)
 
 df_test = shape_data(data_test, is_gbm=True)
 y_test = df_test['label']

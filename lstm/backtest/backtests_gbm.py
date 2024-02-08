@@ -56,7 +56,7 @@ def calculate_strategy_return(signals, market_returns):
 if __name__ == '__main__':
     # バックテストのロジック（ここでは単純な例を使用）
     # 例: 移動平均を基にシグナルを生成
-    df_predict = load_data(is_backtest=True)
+    df_predict = load_data(is_backtest=True, is_bybit=True)
     df = shape_data(df_predict, is_gbm=True)
 
     # モデルをファイルからロード
