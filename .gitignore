@@ -1,4 +1,5 @@
 /*.csv
+*.csv
 .env
 *.h5
 *.json
