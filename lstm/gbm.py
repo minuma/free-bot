@@ -53,6 +53,8 @@ params = {
     'reg_lambda': 0.1,  # 正則化を少し加える
     'nthread': 4,
     'verbose': -1,
+    # 'extra_trees': True,
+    # 'boosting': 'rf',
 }
 
 # データセットの作成

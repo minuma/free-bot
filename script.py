@@ -6,6 +6,7 @@ from datetime import datetime
 
 def job():
     with open('/home/minuma/free-bot/result.txt', 'a') as f:  # ここで指定したパスに結果を追記します
+        time.sleep(3)
         # 各コマンドの実行結果をファイルに書き込む
         result = subprocess.run(['python', '/home/minuma/free-bot/lstm/historical/bybit_api_trade.py'], capture_output=True, text=True)
         f.write(result.stdout)
@@ -22,7 +23,7 @@ def job():
 job()
 
 # 毎時特定の分に実行するスケジュールを設定
-for minute in range(15, 60, 10):
+for minute in range(15, 60, 15):
     schedule.every().hour.at(f":{minute:02d}").do(job)
 
 # minute = 1

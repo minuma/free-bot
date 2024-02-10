@@ -76,21 +76,24 @@ params = {
     'metric': 'multi_logloss',
     'objective': 'binary',  # バイナリ分類用の目的関数
     'metric': 'binary_logloss', 
+    'n_estimators': 10000, 
     'learning_rate': 0.01,
-    'num_leaves': 31,
-    'max_depth': -1,
-    'min_child_samples': 20,
+    'num_leaves': 31,  # 少なくする
+    'max_depth': 10,  # 深さを制限する
+    'min_child_samples': 30,  # 増やす
     'max_bin': 255,
     'subsample': 0.6,
     'subsample_freq': 0,
     'colsample_bytree': 0.7,
     'min_child_weight': 0.001,
     'subsample_for_bin': 200000,
-    'min_split_gain': 0,
-    'reg_alpha': 0,
-    'reg_lambda': 0,
+    'min_split_gain': 0.1,  # ゲインの最小値を設定
+    'reg_alpha': 0.1,  # 正則化を少し加える
+    'reg_lambda': 0.1,  # 正則化を少し加える
     'nthread': 4,
-    'verbose': 0
+    'verbose': -1,
+    'extra_trees': True,
+    'boosting': 'rf',
 }
 
 # データセットの作成
