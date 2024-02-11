@@ -27,9 +27,9 @@ X_test = df_test
 X_test.to_csv('./X_test.csv', index=False)
 
 # データをトレーニングセットとテストセットに分割
-train_size = int(len(data_1) * 0.2)
-X_train, X_test = X_1[:train_size], X_1[train_size:]
-y_train, y_test = y_1[:train_size], y_1[train_size:]
+# train_size = int(len(data_1) * 0.2)
+# X_train, X_test = X_1[:train_size], X_1[train_size:]
+# y_train, y_test = y_1[:train_size], y_1[train_size:]
 
 # LightGBMのパラメータ設定
 params = {
@@ -49,12 +49,11 @@ params = {
     'min_child_weight': 0.001,
     'subsample_for_bin': 200000,
     'min_split_gain': 0.1,  # ゲインの最小値を設定
-    'reg_alpha': 0.1,  # 正則化を少し加える
-    'reg_lambda': 0.1,  # 正則化を少し加える
+    'reg_alpha': 0.01,  # 正則化を少し加える
+    'reg_lambda': 0.01,  # 正則化を少し加える
     'nthread': 4,
     'verbose': -1,
-    # 'extra_trees': True,
-    # 'boosting': 'rf',
+    'extra_trees': True,
 }
 
 # データセットの作成

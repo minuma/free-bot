@@ -93,7 +93,6 @@ params = {
     'nthread': 4,
     'verbose': -1,
     'extra_trees': True,
-    'boosting': 'rf',
 }
 
 # データセットの作成
