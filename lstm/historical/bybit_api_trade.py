@@ -47,7 +47,6 @@ while current_start_timestamp < end_timestamp:
     last_timestamp = int(values[-1][0]) 
     # print(values[-1])
     current_start_timestamp = last_timestamp
-    print(current_start_timestamp)
 
 data = pd.DataFrame(values)
 

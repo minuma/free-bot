@@ -62,7 +62,7 @@ def shape_data(df, timesteps=20, is_predict=False, is_gbm=False):
             #    'VWAP',
                'MFI',
                'Volume_Oscillator',
-            #    'ATR',
+               'ATR',
                'Upper_Wick',
                'Lower_Wick',
                'Candle_Length',
