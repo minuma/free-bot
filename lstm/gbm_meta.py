@@ -4,7 +4,7 @@ import numpy as np
 
 
 # モデルをファイルからロード
-loaded_model = lgb.Booster(model_file='./models/gbm/lightgbm_model.txt')
+loaded_model = lgb.Booster(model_file='./models/gbm/lightgbm_model_tmp.txt')
 
 from data_loader import load_data
 from data_preprocessor import shape_data
@@ -114,4 +114,4 @@ gbm = lgb.train(
 # テストデータに対する予測
 y_pred = gbm.predict(X_test, num_iteration=gbm.best_iteration)
 
-gbm.save_model('./models/gbm/lightgbm_model_meta.txt')
+gbm.save_model('./models/gbm/lightgbm_model_meta_tmp.txt')

@@ -13,6 +13,11 @@ def shape_data(df, timesteps=20, is_predict=False, is_gbm=False):
     df['MA_30'] = df['price_close'].rolling(window=30).mean()
     df['MA_50'] = df['price_close'].rolling(window=50).mean()
     df['MA_100'] = df['price_close'].rolling(window=100).mean()
+    # キャンドルの特徴量の計算
+    df['Upper_Wick'] = df['price_high'] - df[['price_close', 'price_open']].max(axis=1)
+    df['Lower_Wick'] = df[['price_close', 'price_open']].min(axis=1) - df['price_low']
+    df['Candle_Length'] = abs(df['price_close'] - df['price_open'])
+    df['Green_Candle'] = (df['price_close'] > df['price_open']).astype(int)
     df = calculate_divergence_max(df)
     df['OBV'] = calculate_obv(df)
     # 新しい特徴量の追加
@@ -58,6 +63,10 @@ def shape_data(df, timesteps=20, is_predict=False, is_gbm=False):
                'MFI',
                'Volume_Oscillator',
                'ATR',
+            #    'Upper_Wick',
+            #    'Lower_Wick',
+            #    'Candle_Length',
+            #    'Green_Candle',
             #    'volume',
             #    'turnover',
     ]
@@ -144,24 +153,6 @@ def calc_ATR(df_raw, period=14):
 
     # ATR を計算 (例えば20日間平均)
     return df['TR'].rolling(window=period).mean()
-
-# def calculate_dynamic_look_back_period(df, atr_column='ATR', min_period=5, max_period=20):
-#     """
-#     ATR値に基づいて動的なlook_back_periodを計算する関数
-
-#     :param df: データフレーム、ATR列を含む
-#     :param atr_column: ATR値を含む列の名前
-#     :param min_period: 最小のlook_back_period
-#     :param max_period: 最大のlook_back_period
-#     :return: 各行に対する動的なlook_back_periodのリスト
-#     """
-#     # ATR値を基にした正規化や変換ロジックを適用
-#     normalized_atr = (df[atr_column] - df[atr_column].min()) / (df[atr_column].max() - df[atr_column].min())
-
-#     # 正規化されたATR値を使用して期間を動的に調整
-#     dynamic_period = min_period + (1 - normalized_atr) * (max_period - min_period)
-
-#     return dynamic_period.astype(int)
 
 
 def set_triple_barrier(df, take_profit, stop_loss, time_horizon):

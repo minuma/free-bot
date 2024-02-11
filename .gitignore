@@ -6,4 +6,5 @@
 *.joblib
 *.png
 models/gbm/lightgbm_model.txt
+models/gbm/*.txt
 result.txt

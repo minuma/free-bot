@@ -68,12 +68,12 @@ if __name__ == '__main__':
     X = df
 
     # ロードしたモデルを使用して予測を実行
-    loaded_model = lgb.Booster(model_file='./models/gbm/lightgbm_model.txt')
+    loaded_model = lgb.Booster(model_file='./models/gbm/lightgbm_model_tmp.txt')
     y_pred_loaded = loaded_model.predict(X, num_iteration=loaded_model.best_iteration)
 
 
     # metaのためのデータ処理
-    loaded_model_meta = lgb.Booster(model_file='./models/gbm/lightgbm_model_meta.txt')
+    loaded_model_meta = lgb.Booster(model_file='./models/gbm/lightgbm_model_meta_tmp.txt')
     rows_to_drop = len(X) - len(y_pred_loaded)
     X_trimmed = X.iloc[rows_to_drop:]
     X_trimmed.reset_index(drop=True, inplace=True)
@@ -105,10 +105,10 @@ if __name__ == '__main__':
     plt.plot(truncated_df['date_close'], truncated_df['cumulative_strategy_return'], label='Strategy Return', color='blue')
 
    # 買いシグナルと売りシグナルのプロット
-    buy_dates = truncated_df.loc[truncated_df['trade_signal'] == 'buy', 'date_close']
-    sell_dates = truncated_df.loc[truncated_df['trade_signal'] == 'sell', 'date_close']
-    plt.scatter(buy_dates, truncated_df.loc[truncated_df['trade_signal'] == 'buy', 'cumulative_strategy_return'], label='Buy Signal', marker='^', color='green')
-    plt.scatter(sell_dates, truncated_df.loc[truncated_df['trade_signal'] == 'sell', 'cumulative_strategy_return'], label='Sell Signal', marker='v', color='black')
+    # buy_dates = truncated_df.loc[truncated_df['trade_signal'] == 'buy', 'date_close']
+    # sell_dates = truncated_df.loc[truncated_df['trade_signal'] == 'sell', 'date_close']
+    # plt.scatter(buy_dates, truncated_df.loc[truncated_df['trade_signal'] == 'buy', 'cumulative_strategy_return'], label='Buy Signal', marker='^', color='green')
+    # plt.scatter(sell_dates, truncated_df.loc[truncated_df['trade_signal'] == 'sell', 'cumulative_strategy_return'], label='Sell Signal', marker='v', color='black')
 
     plt.legend()
     plt.xlabel('Date')

@@ -7,10 +7,10 @@ import pandas as pd
 url = "https://api.bybit.com/v5/market/kline"
 symbol = "MATICUSDT"
 category = "linear"
-interval = 30
+interval = 15
 
 # 特定の開始日を設定（例：2023年1月1日）
-start_date_str = "2024-01-01"
+start_date_str = "2024-02-01"
 start_date = datetime.strptime(start_date_str, "%Y-%m-%d")
 
 # 1ヶ月後の日付を計算
@@ -45,6 +45,8 @@ while current_start_timestamp < end_timestamp:
     values += reversed_list
     # 最後のデータのタイムスタンプを新しい開始点として設定
     last_timestamp = int(values[-1][0]) 
+    if (last_timestamp == current_start_timestamp):
+        break
     # print(values[-1])
     current_start_timestamp = last_timestamp
     print(current_start_timestamp)
