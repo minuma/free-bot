@@ -3,8 +3,7 @@ import joblib
 # from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import RobustScaler
 import pandas as pd
-
-
+from fracdiff import fdiff
 
 def shape_data(df, timesteps=20, is_predict=False, is_gbm=False):
     # 移動平均、乖離度などの特徴量の計算
@@ -39,33 +38,34 @@ def shape_data(df, timesteps=20, is_predict=False, is_gbm=False):
         df = set_labels_based_on_ATR(df, look_forward_period=10, atr_multiplier_tp=4, atr_multiplier_sl=2)
 
     # 差分の計算
-    columns_to_diff = ['price_close', 'MA_9', 'MA_20', 'MA_30', 'MA_50', 'MA_100', 'OBV', 'VWAP', 'divergence']
-    for col in columns_to_diff:
-        df[f'diff_{col}'] = df[col].diff()
-    df.dropna(inplace=True)
+    columns_to_diff = ['price_close', 'MA_9', 'MA_20', 'MA_30', 'MA_50', 'MA_100', 'OBV', 'VWAP', 'divergence', 'Upper_Wick', 'Lower_Wick', 'Candle_Length']
+    d = 0.5  # 例として0.5次の差分を取る
+    add_fractional_diff(df, columns_to_diff, d)
 
     # 指定された列について異常値を検出し、置き換え
     # max divergenceは未来の値を含んでいるので注意
-    columns = ['price_close',
+    columns = [
+            'price_close',
+            'diff_price_close',
                'diff_MA_100',
-               'MA_100',
+            #    'MA_100',
                'diff_MA_50',
-               'MA_50',
+            #    'MA_50',
                'diff_MA_30',
-               'MA_30',
+            #    'MA_30',
                'diff_MA_20',
-               'MA_20',
+            #    'MA_20',
                'diff_MA_9',
-               'MA_9',
-               'divergence',
+            #    'MA_9',
+               'diff_divergence',
             #    'OBV',
             #    'VWAP',
                'MFI',
-               'Volume_Oscillator',
+            #    'Volume_Oscillator',
                'ATR',
-               'Upper_Wick',
-               'Lower_Wick',
-               'Candle_Length',
+               'diff_Upper_Wick',
+               'diff_Lower_Wick',
+               'diff_Candle_Length',
                'Green_Candle',
             #    'volume',
             #    'turnover',
@@ -111,6 +111,18 @@ def replace_outliers_with_median(df, col):
     median = df[col].median()
 
     df[col] = np.where((df[col] < Q1) | (df[col] > Q3), median, df[col])
+
+# 分数次差分を計算し、結果を元のDataFrameに追加する関数
+def add_fractional_diff(df, columns, d):
+    for col in columns:
+        # 分数次差分を計算
+        diffed_series = fdiff(df[col].values, n=d, axis=0)
+        # 新しい列名を定義
+        new_col_name = f'diff_{col}'
+        # 分数次差分の結果を元のDataFrameに追加
+        df[new_col_name] = diffed_series
+    # NaN値を持つ行を除去
+    df.dropna(inplace=True)
 
 import numpy as np
 

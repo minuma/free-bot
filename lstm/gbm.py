@@ -39,11 +39,11 @@ params = {
     'objective': 'multiclass',
     'num_class': 3,
     'metric': 'multi_logloss',
-    'n_estimators': 100000, 
-    'learning_rate': 0.1,
-    'num_leaves': 51,  # 少なくする
-    'max_depth': 30,  # 深さを制限する
-    'min_child_samples': 50,  # 増やす
+    'n_estimators': 30000, 
+    'learning_rate': 0.05,
+    'num_leaves': 31,  # 少なくする
+    'max_depth': 10,  # 深さを制限する
+    'min_child_samples': 100,  # 増やす
     'max_bin': 255,
     'subsample': 0.6,
     'subsample_freq': 0,
@@ -51,11 +51,14 @@ params = {
     'min_child_weight': 0.001,
     'subsample_for_bin': 200000,
     'min_split_gain': 0.1,  # ゲインの最小値を設定
-    # 'reg_alpha': 0.01,  # 正則化を少し加える
-    # 'reg_lambda': 0.01,  # 正則化を少し加える
+    'reg_alpha': 1.0,  # 正則化を少し加える
+    'reg_lambda': 1.0,  # 正則化を少し加える
     'nthread': 4,
     'verbose': -1,
     'extra_trees': True,
+    'feature_fraction': 0.09, # 低くして汎化
+    'bagging_fraction': 0.09, # 低くして汎化
+    'bagging_freq': 20,
 }
 
 # データセットの作成

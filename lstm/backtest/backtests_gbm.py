@@ -15,17 +15,15 @@ from lstm.data_preprocessor import shape_data
 def generate_trade_signal(y_pred, y_pred_meta):
     signals = []
     predicted_labels = np.argmax(y_pred, axis=1)
+    predicted_max_values = np.max(y_pred, axis=1)  # 各予測の最大値を取得
     print(y_pred)
-    # # 1つ目と3つ目の数値だけを取り出す
-    # y_pred_modified = y_pred[:, [0, 2]]
-    # # 修正した配列で最大値を持つインデックスを見つける
-    # predicted_labels = np.argmax(y_pred_modified, axis=1)
     mean_value = np.mean(y_pred_meta)
-    for pred, meta in zip(predicted_labels, y_pred_meta):
-        if meta >= 0:  # y_pred_metaが0.5以上の場合のみ売買を考慮
-            if pred == 2:  # メタモデルが買いを示唆する場合
+    for i, (pred, meta) in enumerate(zip(predicted_labels, y_pred_meta)):
+        product = predicted_max_values[i] * meta  # 最大値とmeta数値の掛け算
+        if product >= 0.0:
+            if pred == 2: 
                 signals.append('buy')
-            elif pred == 0:  # メタモデルが売りを示唆する場合
+            elif pred == 0:
                 signals.append('sell')
             else:
                 signals.append('hold')

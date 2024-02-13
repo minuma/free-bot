@@ -10,11 +10,11 @@ category = "linear"
 interval = 15
 
 # 特定の開始日を設定（例：2023年1月1日）
-start_date_str = "2023-08-01"
+start_date_str = "2024-02-01"
 start_date = datetime.strptime(start_date_str, "%Y-%m-%d")
 
 # 1ヶ月後の日付を計算
-end_date = start_date + timedelta(days=180)
+end_date = start_date + timedelta(days=30)
 
 # UNIXタイムスタンプに変換
 start_timestamp = int(start_date.timestamp()) * 1000
