@@ -57,7 +57,7 @@ params = {
     'verbose': -1,
     'extra_trees': True,
     'feature_fraction': 0.09, # 低くして汎化
-    'bagging_fraction': 0.09, # 低くして汎化
+    'bagging_fraction': 0.09, # 低くして汎化 n_estimatorsを使い切らないくらいに設定
     'bagging_freq': 20,
 }
 

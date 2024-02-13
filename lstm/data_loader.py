@@ -15,7 +15,7 @@ def load_bybit_data(is_validation=False, is_backtest=False, is_trade=False):
         file_path = f'./lstm/historical/csv/bybit/{minute}/historical_price_20231101.csv'
     if is_backtest:
         # file_path = f'./lstm/historical/csv/bybit/{minute}/historical_price_20231101.csv'
-        file_path = f'./lstm/historical/csv/bybit/{minute}/historical_price_20240101.csv'
+        file_path = f'./lstm/historical/csv/bybit/{minute}/historical_price_20240201.csv'
         # file_path = './lstm/historical/csv/historical_price.json'
     if is_trade:
         file_path = './lstm/historical/csv/historical_price.csv'
