@@ -23,30 +23,25 @@ end_timestamp = int(end_date.timestamp()) * 1000
 values = []
 
 # 終了タイムスタンプを超えないようにする
-current_start_timestamp = start_timestamp
-while current_start_timestamp < end_timestamp:
-    params = {
-        "symbol": symbol,
-        "interval": interval,
-        "category": category,
-        # "start": current_start_timestamp,
-        # "end": min((current_start_timestamp + 200 * 60 * interval * 1000), end_timestamp),
-        "limit": 200
-    }
+params = {
+    "symbol": symbol,
+    "interval": interval,
+    "category": category,
+    # "start": current_start_timestamp,
+    # "end": min((current_start_timestamp + 200 * 60 * interval * 1000), end_timestamp),
+    "limit": 200
+}
 
-    response = requests.get(url, params=params)
-    response_data = response.json()
+response = requests.get(url, params=params)
+response_data = response.json()
 
-    if len(response_data["result"]["list"]) == 0:
-        break
-
-    original_list = response_data["result"]["list"]
-    reversed_list = original_list[::-1]
-    values += reversed_list
-    # 最後のデータのタイムスタンプを新しい開始点として設定
-    last_timestamp = int(values[-1][0]) 
-    # print(values[-1])
-    current_start_timestamp = last_timestamp
+original_list = response_data["result"]["list"]
+reversed_list = original_list[::-1]
+values += reversed_list
+# 最後のデータのタイムスタンプを新しい開始点として設定
+last_timestamp = int(values[-1][0]) 
+# print(values[-1])
+current_start_timestamp = last_timestamp
 
 data = pd.DataFrame(values)
 
