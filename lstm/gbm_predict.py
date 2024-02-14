@@ -31,7 +31,7 @@ def generate_trade_signal(y_pred, y_pred_meta):
 
 if __name__ == '__main__':
     df_predict = load_data(is_trade=True, is_bybit=True)
-    df = shape_data(df_predict, is_gbm=True)
+    df, sub_df = shape_data(df_predict, is_gbm=True)
 
     # モデルをファイルからロード
     df.drop(['label'], axis=1, inplace=True)
@@ -67,6 +67,8 @@ if __name__ == '__main__':
 
     # インデックスを基にして右側結合
     merged_df = pd.concat([truncated_df, df_predict[['date_close']]], axis=1)
+    sub_df.reset_index(inplace=True, drop=True)
+    merged_df = pd.concat([truncated_df, sub_df[['price_close', 'ATR']]], axis=1)
 
     # 結合後のDataFrameをCSVに保存
     merged_df.to_csv('predictions.csv', index=False)

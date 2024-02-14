@@ -5,12 +5,12 @@ import pandas as pd
 
 # https://bybit-exchange.github.io/docs/v5/market/kline
 url = "https://api.bybit.com/v5/market/kline"
-symbol = "MATICUSDT"
+symbol = "SOLUSDT"
 category = "linear"
 interval = 15
 
 # 特定の開始日を設定（例：2023年1月1日）
-start_date_str = "2024-02-01"
+start_date_str = "2023-11-01"
 start_date = datetime.strptime(start_date_str, "%Y-%m-%d")
 
 # 1ヶ月後の日付を計算

@@ -208,8 +208,8 @@ if __name__ == "__main__":
     size = calculate_position_size(0.5, 10, ATR, now_mark_price)
     if side == "hold":
         print("hold")
-        close_position()
-        cancel_price_orders()
+        # close_position()
+        # cancel_price_orders()
         exit()
 
     if side == "close":

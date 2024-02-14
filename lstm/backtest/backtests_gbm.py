@@ -20,7 +20,7 @@ def generate_trade_signal(y_pred, y_pred_meta):
     mean_value = np.mean(y_pred_meta)
     for i, (pred, meta) in enumerate(zip(predicted_labels, y_pred_meta)):
         product = predicted_max_values[i] * meta  # 最大値とmeta数値の掛け算
-        if product >= 0.0:
+        if product >= 0:
             if pred == 2: 
                 signals.append('buy')
             elif pred == 0:
@@ -43,7 +43,7 @@ def calculate_strategy_return(signals, market_returns):
             position = -1
         elif signals.iloc[i-1] == 'hold':
             # 'hold'の場合、前回のポジションを維持
-            position = 0
+            position = position
 
         # 戦略リターンは1個遅れた市場リターンとポジションに依存する
         strategy_return = market_returns.iloc[i] * position
@@ -55,7 +55,7 @@ if __name__ == '__main__':
     # バックテストのロジック（ここでは単純な例を使用）
     # 例: 移動平均を基にシグナルを生成
     df_predict = load_data(is_backtest=True, is_bybit=True)
-    df = shape_data(df_predict, is_gbm=True)
+    df, sub_df = shape_data(df_predict, is_gbm=True)
 
     # モデルをファイルからロード
     df.drop(['label'], axis=1, inplace=True)
@@ -85,6 +85,11 @@ if __name__ == '__main__':
 
     # 取引シグナルに基づいて戦略リターンを計算
     truncated_df['trade_signal'] = generate_trade_signal(y_pred_loaded, y_pred_loaded_meta) 
+    
+    # df_predictのインデックスをリセット（必要に応じて）
+    sub_df.reset_index(inplace=True, drop=True)
+    truncated_df.reset_index(inplace=True, drop=True)
+    truncated_df = pd.concat([truncated_df, sub_df[['price_close']]], axis=1)
 
     truncated_df['market_return'] = truncated_df['price_close'].pct_change()
     truncated_df['market_return'].fillna(0, inplace=True)

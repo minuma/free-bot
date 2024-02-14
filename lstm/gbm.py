@@ -11,22 +11,22 @@ import matplotlib.pyplot as plt
 ## Train 
 data_1 = load_data(is_bybit=True)
 
-df_1 = shape_data(data_1, is_gbm=True)
+df_1, _ = shape_data(data_1, is_gbm=True)
 y_1 = df_1['label']
 
 df_1.drop(['label'], axis=1, inplace=True)
 X_1 = df_1
 
 
-##  Test
-data_test = load_data(is_validation=True, is_bybit=True)
+# ##  Test
+# data_test = load_data(is_validation=True, is_bybit=True)
 
-df_test = shape_data(data_test, is_gbm=True)
-y_test = df_test['label']
+# df_test, _ = shape_data(data_test, is_gbm=True)
+# y_test = df_test['label']
 
-df_test.drop(['label'], axis=1, inplace=True)
-X_test = df_test
-X_test.to_csv('./X_test.csv', index=False)
+# df_test.drop(['label'], axis=1, inplace=True)
+# X_test = df_test
+# X_test.to_csv('./X_test.csv', index=False)
 
 # データをトレーニングセットとテストセットに分割
 train_size = int(len(data_1) * 0.2)
@@ -39,11 +39,11 @@ params = {
     'objective': 'multiclass',
     'num_class': 3,
     'metric': 'multi_logloss',
-    'n_estimators': 30000, 
+    'n_estimators': 50000, 
     'learning_rate': 0.05,
     'num_leaves': 31,  # 少なくする
-    'max_depth': 10,  # 深さを制限する
-    'min_child_samples': 100,  # 増やす
+    'max_depth': 30,  # 深さを制限する
+    'min_child_samples': 50,  # 増やす
     'max_bin': 255,
     'subsample': 0.6,
     'subsample_freq': 0,

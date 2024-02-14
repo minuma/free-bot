@@ -13,7 +13,7 @@ from data_preprocessor import shape_data
 data = load_data(is_validation=True, is_bybit=True)
 
 # 特徴量とターゲットの定義
-df = shape_data(data, is_gbm=True )
+df, _ = shape_data(data, is_gbm=True)
 y = df['label']
 df.drop(['label'], axis=1, inplace=True)
 X = df
