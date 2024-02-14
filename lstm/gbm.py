@@ -39,11 +39,12 @@ params = {
     'objective': 'multiclass',
     'num_class': 3,
     'metric': 'multi_logloss',
-    'n_estimators': 50000, 
-    'learning_rate': 0.05,
+    'n_estimators': 100000, 
+    # 'learning_rate': 0.05, # 検証用
+    'learning_rate': 0.02, # 本番運用用
     'num_leaves': 31,  # 少なくする
     'max_depth': 30,  # 深さを制限する
-    'min_child_samples': 50,  # 増やす
+    'min_child_samples': 30,  # 増やす
     'max_bin': 255,
     'subsample': 0.6,
     'subsample_freq': 0,
@@ -56,8 +57,8 @@ params = {
     'nthread': 4,
     'verbose': -1,
     'extra_trees': True,
-    'feature_fraction': 0.09, # 低くして汎化
-    'bagging_fraction': 0.09, # 低くして汎化 n_estimatorsを使い切らないくらいに設定
+    'feature_fraction': 0.28, # 低くして汎化
+    'bagging_fraction': 0.28, # 低くして汎化 n_estimatorsを使い切らないくらいに設定
     'bagging_freq': 20,
 }
 
