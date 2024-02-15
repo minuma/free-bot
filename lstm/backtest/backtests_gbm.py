@@ -4,6 +4,8 @@ import lightgbm as lgb
 import json
 import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.dates as mdates
+
 
 import sys
 import os
@@ -104,8 +106,14 @@ if __name__ == '__main__':
 
     # 累積リターンのプロット
     plt.figure(figsize=(12, 6))
+    truncated_df['date_close'] = mdates.date2num(truncated_df['date_close']) 
     plt.plot(truncated_df['date_close'], truncated_df['cumulative_market_return'], label='Market Return', color='red')
     plt.plot(truncated_df['date_close'], truncated_df['cumulative_strategy_return'], label='Strategy Return', color='blue')
+
+    # X軸の日付フォーマットと間隔を設定
+    plt.gca().xaxis.set_major_locator(mdates.AutoDateLocator()) 
+    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))  # フォーマットを年-月-日に設定
+    # plt.xticks(rotation=45)
 
    # 買いシグナルと売りシグナルのプロット
     # buy_dates = truncated_df.loc[truncated_df['trade_signal'] == 'buy', 'date_close']
@@ -114,6 +122,7 @@ if __name__ == '__main__':
     # plt.scatter(sell_dates, truncated_df.loc[truncated_df['trade_signal'] == 'sell', 'cumulative_strategy_return'], label='Sell Signal', marker='v', color='black')
 
     plt.legend()
+    # plt.tight_layout()  # レイアウトの自動調整
     plt.xlabel('Date')
     plt.ylabel('Cumulative Return')
     plt.title('Backtest Result')
