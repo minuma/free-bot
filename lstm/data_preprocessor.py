@@ -4,10 +4,13 @@ import joblib
 from sklearn.preprocessing import RobustScaler
 import pandas as pd
 from fracdiff import fdiff
+import talib
 
 def shape_data(df, timesteps=20, is_predict=False, is_gbm=False):
+    close = df['price_close'].values
+
     # 移動平均、乖離度などの特徴量の計算
-    df['MA_9'] = df['price_close'].rolling(window=9).mean()
+    df['MA_9'] = talib.SMA(close, timeperiod=9)
     df['MA_20'] = df['price_close'].rolling(window=20).mean()
     df['MA_30'] = df['price_close'].rolling(window=30).mean()
     df['MA_50'] = df['price_close'].rolling(window=50).mean()
@@ -17,7 +20,7 @@ def shape_data(df, timesteps=20, is_predict=False, is_gbm=False):
     df['Lower_Wick'] = df[['price_close', 'price_open']].min(axis=1) - df['price_low']
     df['Candle_Length'] = abs(df['price_close'] - df['price_open'])
     df['Green_Candle'] = (df['price_close'] > df['price_open']).astype(int)
-    df = calculate_divergence_max(df)
+    # df = calculate_divergence_max(df)
     df['OBV'] = calculate_obv(df)
     # 新しい特徴量の追加
     df['VWAP'] = calculate_vwap(df)
@@ -38,29 +41,28 @@ def shape_data(df, timesteps=20, is_predict=False, is_gbm=False):
         df = set_labels_based_on_ATR(df, look_forward_period=10, atr_multiplier_tp=4, atr_multiplier_sl=2)
 
     # 差分の計算
-    columns_to_diff = ['price_close', 'MA_9', 'MA_20', 'MA_30', 'MA_50', 'MA_100', 'OBV', 'VWAP',  'MFI', 'ATR', 'divergence', 'Upper_Wick', 'Lower_Wick', 'Candle_Length']
+    columns_to_diff = ['price_close', 'MA_9', 'MA_20', 'MA_30', 'MA_50', 'MA_100', 'OBV', 'VWAP',  'MFI', 'ATR', 'Upper_Wick', 'Lower_Wick', 'Candle_Length']
     d = 0.5  # 例として0.5次の差分を取る
     add_fractional_diff(df, columns_to_diff, d)
 
     # 指定された列について異常値を検出し、置き換え
     # max divergenceは未来の値を含んでいるので注意
     columns = [
-            'diff_price_close',
+            # 'diff_price_close',
                'diff_MA_100',
                'diff_MA_50',
                'diff_MA_30',
                'diff_MA_20',
                'diff_MA_9',
-               'diff_divergence',
                'diff_OBV',
                'diff_VWAP',
                'diff_MFI',
             #    'Volume_Oscillator',
                'diff_ATR',
-               'diff_Upper_Wick',
-               'diff_Lower_Wick',
+            #    'diff_Upper_Wick',
+            #    'diff_Lower_Wick',
                'diff_Candle_Length',
-               'Green_Candle',
+            #    'Green_Candle',
             #    'volume',
             #    'turnover',
     ]
