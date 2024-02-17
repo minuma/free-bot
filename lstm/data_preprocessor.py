@@ -13,13 +13,6 @@ def shape_data(df, timesteps=20, is_predict=False, is_gbm=False):
     low = df['price_low'].values
     volume = df['volume'].astype(float).values
 
-    df, overlap_added_columns = calc_overlap_studies(df, close, open, high, low)
-    df, momentum_added_columns = calc_momentum_indicators(df, open, high, low, close, volume)
-    df, volume_added_columns = calc_volume_indicators(df, high, low, close, volume)
-    df, volatility_added_columns = calc_volatility_indicators(df, high, low, close)
-    df, cycle_added_columns = calc_cycle_indicators(df, close)
-    df, statistic_added_columns = calc_statistic_functions(df, high, low, close)
-
     df['MA_5'] = df['price_close'].rolling(window=5).mean()
     df['MA_9'] = talib.SMA(close, timeperiod=9)
     df['MA_20'] = df['price_close'].rolling(window=20).mean()
@@ -37,12 +30,17 @@ def shape_data(df, timesteps=20, is_predict=False, is_gbm=False):
     df['VWAP'] = calculate_vwap(df)
     df['Volume_Oscillator'] = calculate_volume_oscillator(df)
     df['ATR'] = calc_ATR(df)
+    
+    df, overlap_added_columns = calc_overlap_studies(df, close, open, high, low)
+    df, momentum_added_columns = calc_momentum_indicators(df, open, high, low, close, volume)
+    df, volume_added_columns = calc_volume_indicators(df, high, low, close, volume)
+    df, volatility_added_columns = calc_volatility_indicators(df, high, low, close)
+    df, cycle_added_columns = calc_cycle_indicators(df, close)
+    df, statistic_added_columns = calc_statistic_functions(df, high, low, close)
+    # df, pattern_columns = calc_pattern_recognition(df, open, high, low, close)
+
     # トリプルバリアの適用
     if is_gbm:
-        # df = set_labels_based_on_past_data(df, look_back_period=10, ptSl=0.01)
-        # df = set_triple_barrier(df, take_profit=0.01, stop_loss=-0.01, time_horizon=10)
-        # df = calc_ma_slope(df, timesteps=2, threshold=0.0001)
-
         # 良い感じの値: 20, 1.5, 1.5  ラベルが30%ずつに分かれる
         df = set_labels_based_on_ATR(df, look_forward_period=5, atr_multiplier_tp=0.9, atr_multiplier_sl=0.9)
     else:
@@ -80,9 +78,9 @@ def shape_data(df, timesteps=20, is_predict=False, is_gbm=False):
             'price_close',
             'ATR',
     ]
-    # added_columns = overlap_added_columns + momentum_added_columns + volume_added_columns + volatility_added_columns + statistic_added_columns + cycle_added_columns
+    added_columns = overlap_added_columns + momentum_added_columns + volume_added_columns + volatility_added_columns + statistic_added_columns + cycle_added_columns
 
-    added_columns = ['ATR', 'VAR', 'ADXR', 'TRIX', 'macdhistext', 'macdsignalfix', 'macdsignalext', 'macdsignal','KAMA', 'AD', 'ADX', 'CMO']
+    # added_columns = ['NATR', 'ATR', 'ADXR', 'TRIX', 'PLUS_DM', 'OBV', 'CORREL', 'AD', 'CMO', 'DX', 'macdsignalext']
     columns += added_columns
     add_fractional_diff_raw(df, added_columns, d)
 
@@ -374,3 +372,31 @@ def calc_statistic_functions(df, high, low, close):
     df['VAR'] = talib.VAR(close, timeperiod=5, nbdev=1)
     
     return df, added_columns
+
+def calc_pattern_recognition(df, open, high, low, close):
+    # パターン認識関数のリスト
+    pattern_functions = [
+        'CDL2CROWS', 'CDL3BLACKCROWS', 'CDL3INSIDE', 'CDL3LINESTRIKE',
+        'CDL3OUTSIDE', 'CDL3STARSINSOUTH', 'CDL3WHITESOLDIERS', 'CDLABANDONEDBABY',
+        'CDLADVANCEBLOCK', 'CDLBELTHOLD', 'CDLBREAKAWAY', 'CDLCLOSINGMARUBOZU',
+        'CDLCONCEALBABYSWALL', 'CDLCOUNTERATTACK', 'CDLDARKCLOUDCOVER', 'CDLDOJI',
+        'CDLDOJISTAR', 'CDLDRAGONFLYDOJI', 'CDLENGULFING', 'CDLEVENINGDOJISTAR',
+        'CDLEVENINGSTAR', 'CDLGAPSIDESIDEWHITE', 'CDLGRAVESTONEDOJI', 'CDLHAMMER',
+        'CDLHANGINGMAN', 'CDLHARAMI', 'CDLHARAMICROSS', 'CDLHIGHWAVE', 'CDLHIKKAKE',
+        'CDLHIKKAKEMOD', 'CDLHOMINGPIGEON', 'CDLIDENTICAL3CROWS', 'CDLINNECK',
+        'CDLINVERTEDHAMMER', 'CDLKICKING', 'CDLKICKINGBYLENGTH', 'CDLLADDERBOTTOM',
+        'CDLLONGLEGGEDDOJI', 'CDLLONGLINE', 'CDLMARUBOZU', 'CDLMATCHINGLOW',
+        'CDLMATHOLD', 'CDLMORNINGDOJISTAR', 'CDLMORNINGSTAR', 'CDLONNECK',
+        'CDLPIERCING', 'CDLRICKSHAWMAN', 'CDLRISEFALL3METHODS', 'CDLSEPARATINGLINES',
+        'CDLSHOOTINGSTAR', 'CDLSHORTLINE', 'CDLSPINNINGTOP', 'CDLSTALLEDPATTERN',
+        'CDLSTICKSANDWICH', 'CDLTAKURI', 'CDLTASUKIGAP', 'CDLTHRUSTING', 'CDLTRISTAR',
+        'CDLUNIQUE3RIVER', 'CDLUPSIDEGAP2CROWS', 'CDLXSIDEGAP3METHODS'
+    ]
+
+    # 各パターン認識関数を実行し、結果をDataFrameに追加
+    for func_name in pattern_functions:
+        # TA-Lib関数の取得と実行
+        func = getattr(talib, func_name)
+        df[func_name] = func(open, high, low, close)    
+
+    return df, pattern_functions
