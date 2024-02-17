@@ -10,11 +10,12 @@ category = "linear"
 interval =3 
 
 # 特定の開始日を設定（例：2023年1月1日）
-start_date_str = "2023-04-01"
+start_date_str = "2023-10-01"
 start_date = datetime.strptime(start_date_str, "%Y-%m-%d")
+days = 90
 
 # 1ヶ月後の日付を計算
-end_date = start_date + timedelta(days=180)
+end_date = start_date + timedelta(days=days)
 
 # UNIXタイムスタンプに変換
 start_timestamp = int(start_date.timestamp()) * 1000
@@ -74,4 +75,4 @@ data.sort_values("date_close", inplace=True)
 
 new_date_str = datetime.strptime(start_date_str, "%Y-%m-%d").strftime("%Y%m%d")
 # data.to_csv(f"./lstm/historical/bybit_{symbol}_{category}_{interval}_{start_date_str}_to_{end_date.strftime('%Y-%m-%d')}.csv", index=False)
-data.to_csv(f"./lstm/historical/historical_price_{new_date_str}.csv", index=False)
+data.to_csv(f"./lstm/historical/historical_price_{new_date_str}_{days}days.csv", index=False)

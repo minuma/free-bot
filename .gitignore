@@ -8,3 +8,4 @@
 models/gbm/lightgbm_model.txt
 models/gbm/*.txt
 result.txt
+adjusted_best_iteration.txt

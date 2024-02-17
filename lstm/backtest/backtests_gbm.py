@@ -83,7 +83,7 @@ if __name__ == '__main__':
     predictions_df = predictions_df[['predicted_label']]
 
     X_comb = X_trimmed.join(predictions_df)
-    y_pred_loaded_meta = loaded_model_meta.predict(X_comb, num_iteration=loaded_model.best_iteration)
+    y_pred_loaded_meta = loaded_model_meta.predict(X_comb, num_iteration=loaded_model.best_iteration, predict_disable_shape_check=True)
 
     # 取引シグナルに基づいて戦略リターンを計算
     truncated_df['trade_signal'] = generate_trade_signal(y_pred_loaded, y_pred_loaded_meta) 

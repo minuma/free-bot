@@ -42,14 +42,14 @@ def shape_data(df, timesteps=20, is_predict=False, is_gbm=False):
     # トリプルバリアの適用
     if is_gbm:
         # 良い感じの値: 20, 1.5, 1.5  ラベルが30%ずつに分かれる
-        df = set_labels_based_on_ATR(df, look_forward_period=5, atr_multiplier_tp=0.9, atr_multiplier_sl=0.9)
+        df = set_labels_based_on_ATR(df, look_forward_period=5, atr_multiplier_tp=1, atr_multiplier_sl=1)
     else:
         # df = set_triple_barrier(df, take_profit=0.01, stop_loss=-0.01, time_horizon=10)
         df = set_labels_based_on_ATR(df, look_forward_period=10, atr_multiplier_tp=4, atr_multiplier_sl=2)
 
     # 差分の計算
     columns_to_diff = ['price_close', 'MA_5', 'MA_9', 'MA_20', 'MA_30', 'MA_50', 'MA_75', 'MA_100', 'VWAP',  'MFI', 'ATR']
-    d = 0.5  # 例として0.5次の差分を取る
+    d = 0.3  # 少ないほど過去の情報を多く含む
     add_fractional_diff(df, columns_to_diff, d)
 
     # 指定された列について異常値を検出し、置き換え
