@@ -8,15 +8,15 @@ def load_data(is_validation=False, is_backtest=False, is_trade=False, is_bybit=F
     return load_syve_data(is_validation, is_backtest, is_trade)
 
 def load_bybit_data(is_validation=False, is_backtest=False, is_trade=False):
-    minute = '15m'
+    minute = '3m'
     pair = 'matic'
-    file_path = f'./lstm/historical/csv/bybit/{pair}/{minute}/historical_price_20220101_1year.csv'
+    file_path = f'./lstm/historical/csv/bybit/{pair}/{minute}/historical_price_20230401_6month.csv'
     if is_validation:
-        # file_path = f'./lstm/historical/csv/bybit/{minute}/historical_price_20240101.csv'
-        file_path = f'./lstm/historical/csv/bybit/{pair}/{minute}/historical_price_20240101.csv'
+        # file_path = f'./lstm/historical/csv/bybit/{pair}/{minute}/historical_price_20240101.csv'
+        file_path = f'./lstm/historical/csv/bybit/{pair}/{minute}/historical_price_20230701.csv'
     if is_backtest:
         # file_path = f'./lstm/historical/csv/bybit/{minute}/historical_price_20231101.csv'
-        file_path = f'./lstm/historical/csv/bybit/{pair}/{minute}/historical_price_20230101.csv'
+        file_path = f'./lstm/historical/csv/bybit/{pair}/{minute}/historical_price_20231001.csv'
         # file_path = './lstm/historical/csv/historical_price.json'
     if is_trade:
         file_path = './lstm/historical/csv/historical_price.csv'
