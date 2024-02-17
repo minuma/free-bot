@@ -8,6 +8,9 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import TimeSeriesSplit
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import log_loss
+from sklearn.feature_selection import mutual_info_classif
+from sklearn.utils.class_weight import compute_class_weight
+
 
 ## Train 
 data_1 = load_data(is_bybit=True)
@@ -27,9 +30,10 @@ params = {
     'n_estimators': 10000, 
     # 'learning_rate': 0.05, # 検証用
     'learning_rate': 0.01, # 本番運用用
-    'num_leaves': 31,  # 少なくする
-    'max_depth': 20,  # 深さを制限する
-    'min_child_samples': 20,  # 増やす
+    'num_leaves': 21,  # 少なくする
+    'max_depth': 10,  # 深さを制限する
+    'min_child_samples': 30,  # 増やす
+    'cosample_bytree': 0.7,
     # 'n_bins': 5,
     # 'max_bin': 255,
     'subsample': 0.6,
@@ -45,9 +49,8 @@ params = {
     'extra_trees': True,
     'feature_fraction': 0.1, # 低くして汎化
     'bagging_fraction': 0.1, # 低くして汎化
-    'bagging_freq': 4,
+    'bagging_freq': 2,
     'is_unbalance': True,
-    'scale_pos_weight': 1,
 }
 
 # 時系列分割の設定
@@ -64,8 +67,17 @@ for train_index, test_index in tscv.split(X_1):
     X_train, X_val = X_1.iloc[train_index], X_1.iloc[test_index]
     y_train, y_val = y_1.iloc[train_index], y_1.iloc[test_index]
 
+    # クラスの重みを計算
+    unique_classes = np.unique(y_train)  # y_trainは訓練データのラベル
+    class_weights = compute_class_weight('balanced', classes=unique_classes, y=y_train)
+    # サンプルごとの重みを設定
+    weights = np.ones(y_train.shape[0])
+    for i, val in enumerate(unique_classes):
+        weights[y_train == val] = class_weights[i]
+
+    # 重み付きデータセットの作成
     # LightGBM用のデータセットを作成
-    lgb_train = lgb.Dataset(X_train, label=y_train)
+    lgb_train = lgb.Dataset(X_train, y_train, weight=weights)
     lgb_val = lgb.Dataset(X_val, label=y_val, reference=lgb_train)
 
     # モデルの訓練
@@ -121,3 +133,14 @@ print(f'Adjusted average best iteration: {average_best_iteration}')
 # 計算された値をファイルに保存
 with open('adjusted_best_iteration.txt', 'w') as f:
     f.write(str(average_best_iteration))
+
+# 相互情報量の計算
+mi = mutual_info_classif(X_train, y_train)
+mi_series = pd.Series(mi, index=X_train.columns)
+
+# 結果の表示
+mi_series = mi_series.sort_values(ascending=False)
+
+# 計算された値をファイルに保存
+with open('mutual_info.txt', 'w') as f:
+    f.write(str(mi_series))

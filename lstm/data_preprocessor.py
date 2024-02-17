@@ -30,6 +30,10 @@ def shape_data(df, timesteps=20, is_predict=False, is_gbm=False):
     df['VWAP'] = calculate_vwap(df)
     df['Volume_Oscillator'] = calculate_volume_oscillator(df)
     df['ATR'] = calc_ATR(df)
+
+    # ランダムなノイズデータを追加
+    np.random.seed(42)  # 再現性のための乱数シード
+    df['noise'] = np.random.normal(0, 1, len(df))  # 平均0、標準偏差1の正規分布からノイズを生成
     
     df, overlap_added_columns = calc_overlap_studies(df, close, open, high, low)
     df, momentum_added_columns = calc_momentum_indicators(df, open, high, low, close, volume)
@@ -48,7 +52,7 @@ def shape_data(df, timesteps=20, is_predict=False, is_gbm=False):
         df = set_labels_based_on_ATR(df, look_forward_period=10, atr_multiplier_tp=4, atr_multiplier_sl=2)
 
     # 差分の計算
-    columns_to_diff = ['price_close', 'MA_5', 'MA_9', 'MA_20', 'MA_30', 'MA_50', 'MA_75', 'MA_100', 'VWAP',  'MFI', 'ATR']
+    columns_to_diff = ['price_close', 'MA_5', 'MA_9', 'MA_20', 'MA_30', 'MA_50', 'MA_75', 'MA_100', 'VWAP',  'MFI', 'ATR', 'noise']
     d = 0.3  # 少ないほど過去の情報を多く含む
     add_fractional_diff(df, columns_to_diff, d)
 
@@ -64,21 +68,23 @@ def shape_data(df, timesteps=20, is_predict=False, is_gbm=False):
                'diff_MA_9',
                'diff_MA_5',
                'diff_VWAP',
-               'diff_MFI',
+            #    'diff_MFI',
             #    'Volume_Oscillator',
-               'diff_ATR',
+            #    'diff_ATR',
             #    'diff_Upper_Wick',
             #    'diff_Lower_Wick',
             #    'diff_Candle_Length',
             #    'Green_Candle',
             #    'volume',
             #    'turnover',
+                # 'diff_noise',
     ]
     columns_sub = [
             'price_close',
             'ATR',
     ]
     added_columns = overlap_added_columns + momentum_added_columns + volume_added_columns + volatility_added_columns + statistic_added_columns + cycle_added_columns
+    # added_columns =  momentum_added_columns
 
     # added_columns = ['NATR', 'ATR', 'ADXR', 'TRIX', 'PLUS_DM', 'OBV', 'CORREL', 'AD', 'CMO', 'DX', 'macdsignalext']
     columns += added_columns
@@ -252,6 +258,8 @@ def calc_overlap_studies(df, close, open, high, low):
         'mama', 'fama', 'MIDPOINT', 'MIDPRICE', 
         'SAR', 'SAREXT', 'SMA', 'T3', 'TEMA', 'TRIMA', 'WMA'
     ]
+    exclude_columns = ['SAR', 'SAREXT', 'T3', 'upperband', 'middleband', 'lowerband']
+    added_columns = [col for col in added_columns if col not in exclude_columns]
 
     upperband, middleband, lowerband = talib.BBANDS(close, timeperiod=5, nbdevup=2, nbdevdn=2, matype=0)
     df['upperband'], df['middleband'], df['lowerband'] = upperband, middleband, lowerband
@@ -282,6 +290,9 @@ def calc_momentum_indicators(df, open, high, low, close, volume):
         'MFI', 'MINUS_DI', 'MINUS_DM', 'MOM', 'PLUS_DI', 'PLUS_DM', 'PPO', 'ROC', 'ROCP', 'ROCR', 'ROCR100', 'RSI',
         'slowk', 'slowd', 'fastk', 'fastd', 'stochrsik', 'stochrsid', 'TRIX', 'ULTOSC', 'WILLR'
     ]
+    exclude_columns = ['aroondown', 'macd', 'WILLR', 'aroonup', 'AROONOSC', 'BOP', 'DX', 'macdsignal', 'slowk', 'MFI', 'ULTOSC', 'fastd', 'slowd', 'stochrsid', 'fastk']
+    added_columns = [col for col in added_columns if col not in exclude_columns]
+
     df['ADX'] = talib.ADX(high, low, close, timeperiod=14)
     df['ADXR'] = talib.ADXR(high, low, close, timeperiod=14)
     df['APO'] = talib.APO(close, fastperiod=12, slowperiod=26, matype=0)
@@ -326,6 +337,9 @@ def calc_volume_indicators(df, high, low, close, volume):
     added_columns = [
         'AD', 'ADOSC', 'OBV'
     ]
+    exclude_columns = ['ADOSC']
+    added_columns = [col for col in added_columns if col not in exclude_columns]
+
     df['AD'] = talib.AD(high, low, close, volume)
     df['ADOSC'] = talib.ADOSC(high, low, close, volume, fastperiod=3, slowperiod=10)
     df['OBV'] = talib.OBV(close, volume)
@@ -337,6 +351,9 @@ def calc_volatility_indicators(df, high, low, close):
     added_columns = [
         'ATR', 'NATR', 'TRANGE'
     ]
+    exclude_columns = ['TRANGE']
+    added_columns = [col for col in added_columns if col not in exclude_columns]
+
     df['ATR'] = talib.ATR(high, low, close, timeperiod=14)
     df['NATR'] = talib.NATR(high, low, close, timeperiod=14)
     df['TRANGE'] = talib.TRANGE(high, low, close)
@@ -347,6 +364,9 @@ def calc_cycle_indicators(df, close):
     added_columns = [
         'HT_DCPERIOD', 'HT_DCPHASE', 'HT_PHASOR_inphase', 'HT_PHASOR_quadrature', 'HT_SINE_sine', 'HT_SINE_leadsine', 'HT_TRENDMODE'
     ]
+    exclude_columns = ['HT_PHASOR_inphase', 'HT_DCPHASE', 'HT_TRENDMODE', 'HT_DCPERIOD', 'HT_SINE_leadsine']
+    added_columns = [col for col in added_columns if col not in exclude_columns]
+
     df['HT_DCPERIOD'] = talib.HT_DCPERIOD(close)
     df['HT_DCPHASE'] = talib.HT_DCPHASE(close)
     inphase, quadrature = talib.HT_PHASOR(close)
@@ -361,6 +381,9 @@ def calc_statistic_functions(df, high, low, close):
     added_columns = [
         'BETA', 'CORREL', 'LINEARREG', 'LINEARREG_ANGLE', 'LINEARREG_INTERCEPT', 'LINEARREG_SLOPE', 'STDDEV', 'TSF', 'VAR'
     ]
+    exclude_columns = ['BETA', 'CORREL', 'LINEARREG_INTERCEPT', 'STDDEV']
+    added_columns = [col for col in added_columns if col not in exclude_columns]
+
     df['BETA'] = talib.BETA(high, low, timeperiod=5)
     df['CORREL'] = talib.CORREL(high, low, timeperiod=30)
     df['LINEARREG'] = talib.LINEARREG(close, timeperiod=14)

@@ -5,17 +5,17 @@ from statsmodels.distributions.empirical_distribution import ECDF
 from data_loader import load_data
 from data_preprocessor import shape_data
 import matplotlib.pyplot as plt
-
+from sklearn.utils.class_weight import compute_class_weight
 
 
 ## Train 
 data_1 = load_data(is_bybit=True)
 
 df_1, _ = shape_data(data_1, is_gbm=True)
-y_1 = df_1['label']
+y_train = df_1['label']
 
 df_1.drop(['label'], axis=1, inplace=True)
-X_1 = df_1
+X_train = df_1
 
 
 # #  Test
@@ -39,7 +39,7 @@ params = {
     'objective': 'multiclass',
     'num_class': 3,
     'metric': 'multi_logloss',
-    'n_estimators': 270, 
+    'n_estimators': 323, 
     # 'learning_rate': 0.05, # 検証用
     'learning_rate': 0.01, # 本番運用用
     'num_leaves': 31,  # 少なくする
@@ -62,19 +62,25 @@ params = {
     'bagging_fraction': 0.1, # 低くして汎化
     'bagging_freq': 4,
     'is_unbalance': True,
-    'scale_pos_weight': 1,
 }
 
 
-# データセットの作成
-train_data = lgb.Dataset(X_1, label=y_1)
-# train_data = lgb.Dataset(X_train, label=y_train)
-# test_data = lgb.Dataset(X_test, label=y_test, reference=train_data)
+# クラスの重みを計算
+unique_classes = np.unique(y_train)  # y_trainは訓練データのラベル
+class_weights = compute_class_weight('balanced', classes=unique_classes, y=y_train)
+# サンプルごとの重みを設定
+weights = np.ones(y_train.shape[0])
+for i, val in enumerate(unique_classes):
+    weights[y_train == val] = class_weights[i]
+
+# 重み付きデータセットの作成
+# LightGBM用のデータセットを作成
+lgb_train = lgb.Dataset(X_train, y_train, weight=weights)
 
 # モデルのトレーニング
 gbm = lgb.train(
     params, 
-    train_data, 
+    lgb_train, 
     # valid_sets=[train_data, test_data], 
     # num_boost_round=5000, 
     # callbacks=[
@@ -88,7 +94,7 @@ gbm = lgb.train(
 gbm.save_model('./models/gbm/lightgbm_model_tmp.txt')
 
 # 特徴量の重要度をプロット
-ax = lgb.plot_importance(gbm, max_num_features=20, importance_type='gain')
+ax = lgb.plot_importance(gbm, max_num_features=20, importance_type='split')
 plt.title("Feature Importance")
 plt.xlabel("Feature Importance")
 plt.ylabel("Features")
