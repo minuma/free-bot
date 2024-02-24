@@ -14,8 +14,8 @@ import math
 from dotenv import load_dotenv
 load_dotenv()
 
-contract = "MATIC_USDT"
-multiplier = 1.5 # ATRの何倍でTP, SPを設定するか
+contract = "BTC_USDT"
+multiplier = 1 # ATRの何倍でTP, SPを設定するか
 
 def gen_sign(method, url, query_string=None, payload_string=None):
     key = os.getenv('GATE_IO_API_KEY')        # api_key
@@ -205,11 +205,11 @@ if __name__ == "__main__":
     side, ATR = get_side_from_predictions()
     now_mark_price = get_mark_price()
     print(side)
-    size = calculate_position_size(0.5, 10, ATR, now_mark_price)
+    size = calculate_position_size(0.01, 0.0001, ATR, now_mark_price)
     if side == "hold":
         print("hold")
-        # close_position()
-        # cancel_price_orders()
+        close_position()
+        cancel_price_orders()
         exit()
 
     if side == "close":

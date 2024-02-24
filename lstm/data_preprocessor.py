@@ -21,10 +21,10 @@ def shape_data(df, timesteps=20, is_predict=False, is_gbm=False):
     df['MA_75'] = df['price_close'].rolling(window=75).mean()
     df['MA_100'] = df['price_close'].rolling(window=100).mean()
     # キャンドルの特徴量の計算
-    # df['Upper_Wick'] = df['price_high'] - df[['price_close', 'price_open']].max(axis=1)
-    # df['Lower_Wick'] = df[['price_close', 'price_open']].min(axis=1) - df['price_low']
-    # df['Candle_Length'] = abs(df['price_close'] - df['price_open'])
-    # df['Green_Candle'] = (df['price_close'] > df['price_open']).astype(int)
+    df['Upper_Wick'] = df['price_high'] - df[['price_close', 'price_open']].max(axis=1)
+    df['Lower_Wick'] = df[['price_close', 'price_open']].min(axis=1) - df['price_low']
+    df['Candle_Length'] = abs(df['price_close'] - df['price_open'])
+    df['Green_Candle'] = (df['price_close'] > df['price_open']).astype(int)
     # df = calculate_divergence_max(df)
     # 新しい特徴量の追加
     df['VWAP'] = calculate_vwap(df)
@@ -46,14 +46,16 @@ def shape_data(df, timesteps=20, is_predict=False, is_gbm=False):
     # トリプルバリアの適用
     if is_gbm:
         # 良い感じの値: 20, 1.5, 1.5  ラベルが30%ずつに分かれる
-        df = set_labels_based_on_ATR(df, look_forward_period=5, atr_multiplier_tp=1, atr_multiplier_sl=1)
+        df = set_labels_based_on_ATR(df, look_forward_period=20, atr_multiplier_tp=3, atr_multiplier_sl=3)
+        # df = classify_future_direction(df, look_forward_period=15, threshold=0.002)
     else:
         # df = set_triple_barrier(df, take_profit=0.01, stop_loss=-0.01, time_horizon=10)
         df = set_labels_based_on_ATR(df, look_forward_period=10, atr_multiplier_tp=4, atr_multiplier_sl=2)
 
     # 差分の計算
-    columns_to_diff = ['price_close', 'MA_5', 'MA_9', 'MA_20', 'MA_30', 'MA_50', 'MA_75', 'MA_100', 'VWAP',  'MFI', 'ATR', 'noise']
-    d = 0.3  # 少ないほど過去の情報を多く含む
+    # columns_to_diff = ['price_close', 'MA_5', 'MA_9', 'MA_20', 'MA_30', 'MA_50', 'MA_75', 'MA_100', 'VWAP',  'MFI', 'ATR', 'Volume_Oscillator', 'noise']
+    columns_to_diff = ['Upper_Wick', 'Lower_Wick', 'Candle_Length', 'price_close', 'MA_5', 'MA_9', 'MA_20', 'MA_30', 'MA_50', 'MA_75', 'MA_100', 'VWAP',  'MFI', 'ATR', 'Volume_Oscillator', 'noise']
+    d = 0.8  # 少ないほど過去の情報を多く含む
     add_fractional_diff(df, columns_to_diff, d)
 
     # 指定された列について異常値を検出し、置き換え
@@ -67,12 +69,12 @@ def shape_data(df, timesteps=20, is_predict=False, is_gbm=False):
                'diff_MA_20',
                'diff_MA_9',
                'diff_MA_5',
-               'diff_VWAP',
+               'diff_VWAP', # yとの相関が高すぎる
             #    'diff_MFI',
-            #    'Volume_Oscillator',
-            #    'diff_ATR',
-            #    'diff_Upper_Wick',
-            #    'diff_Lower_Wick',
+               'diff_Volume_Oscillator',
+               'diff_ATR',
+               'diff_Upper_Wick',
+               'diff_Lower_Wick',
             #    'diff_Candle_Length',
             #    'Green_Candle',
             #    'volume',
@@ -240,6 +242,29 @@ def set_labels_based_on_ATR(df, look_forward_period, atr_multiplier_tp=4, atr_mu
 
     return df
 
+def classify_future_direction(df, column='price_close', look_forward_period=5, threshold=0.01):
+    """
+    未来の価格方向を分類します。
+    df: データフレーム
+    column: 価格データのカラム名
+    look_forward_period: 未来を予測する期間
+    threshold: 分類のための閾値
+    """
+    future_return = df[column].shift(-look_forward_period) / df[column] - 1
+    df['label'] = 1  # 価格変動なしを示すデフォルト値
+    df.loc[future_return > threshold, 'label'] = 2  # 価格上昇
+    df.loc[future_return < -threshold, 'label'] = 0  # 価格下落
+
+    label_0_percentage = (df['label'] == 0).mean()
+    label_1_percentage = (df['label'] == 1).mean()
+    label_2_percentage = (df['label'] == 2).mean()
+
+    print(f"label=0の割合: {label_0_percentage * 100:.2f}%")
+    print(f"label=1の割合: {label_1_percentage * 100:.2f}%")
+    print(f"label=2の割合: {label_2_percentage * 100:.2f}%")
+    
+    return df
+
 
 def calculate_vwap(data):
     vwap = (data['price_close'] * data['volume']).cumsum() / data['volume'].cumsum()
@@ -290,7 +315,7 @@ def calc_momentum_indicators(df, open, high, low, close, volume):
         'MFI', 'MINUS_DI', 'MINUS_DM', 'MOM', 'PLUS_DI', 'PLUS_DM', 'PPO', 'ROC', 'ROCP', 'ROCR', 'ROCR100', 'RSI',
         'slowk', 'slowd', 'fastk', 'fastd', 'stochrsik', 'stochrsid', 'TRIX', 'ULTOSC', 'WILLR'
     ]
-    exclude_columns = ['aroondown', 'macd', 'WILLR', 'aroonup', 'AROONOSC', 'BOP', 'DX', 'macdsignal', 'slowk', 'MFI', 'ULTOSC', 'fastd', 'slowd', 'stochrsid', 'fastk']
+    exclude_columns = ['RSI', 'CMO', 'stochrsik', 'CCI', 'CCI', 'PLUS_DM', 'aroondown', 'macd', 'WILLR', 'aroonup', 'AROONOSC', 'BOP', 'DX', 'macdsignal', 'slowk', 'MFI', 'ULTOSC', 'fastd', 'slowd', 'stochrsid', 'fastk']
     added_columns = [col for col in added_columns if col not in exclude_columns]
 
     df['ADX'] = talib.ADX(high, low, close, timeperiod=14)
@@ -351,7 +376,7 @@ def calc_volatility_indicators(df, high, low, close):
     added_columns = [
         'ATR', 'NATR', 'TRANGE'
     ]
-    exclude_columns = ['TRANGE']
+    exclude_columns = ['TRANGE', 'NATR']
     added_columns = [col for col in added_columns if col not in exclude_columns]
 
     df['ATR'] = talib.ATR(high, low, close, timeperiod=14)
@@ -381,7 +406,7 @@ def calc_statistic_functions(df, high, low, close):
     added_columns = [
         'BETA', 'CORREL', 'LINEARREG', 'LINEARREG_ANGLE', 'LINEARREG_INTERCEPT', 'LINEARREG_SLOPE', 'STDDEV', 'TSF', 'VAR'
     ]
-    exclude_columns = ['BETA', 'CORREL', 'LINEARREG_INTERCEPT', 'STDDEV']
+    exclude_columns = ['BETA', 'CORREL', 'LINEARREG_INTERCEPT', 'STDDEV', 'LINEARREG_ANGLE', 'LINEARREG_SLOPE', 'VAR']
     added_columns = [col for col in added_columns if col not in exclude_columns]
 
     df['BETA'] = talib.BETA(high, low, timeperiod=5)

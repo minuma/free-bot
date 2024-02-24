@@ -29,26 +29,26 @@ params = {
     'metric': 'multi_logloss',
     'n_estimators': 10000, 
     # 'learning_rate': 0.05, # 検証用
-    'learning_rate': 0.01, # 本番運用用
-    'num_leaves': 21,  # 少なくする
-    'max_depth': 10,  # 深さを制限する
-    'min_child_samples': 30,  # 増やす
-    'cosample_bytree': 0.7,
+    'learning_rate': 0.005, # 本番運用用
+    'num_leaves': 30,  # 少なくする
+    'max_depth': -1,  # 深さを制限する
+    'min_child_samples': 20,  # 増やす
+    # 'cosample_bytree': 0.7,
     # 'n_bins': 5,
     # 'max_bin': 255,
-    'subsample': 0.6,
-    'subsample_freq': 0,
-    'colsample_bytree': 0.7,
-    'min_child_weight': 0.001,
-    'subsample_for_bin': 200000,
-    'min_split_gain': 0.1,  # ゲインの最小値を設定
+    # 'subsample': 0.6,
+    # 'subsample_freq': 0,
+    # 'colsample_bytree': 0.7,
+    # 'min_child_weight': 0.001,
+    # 'subsample_for_bin': 200000,
+    # 'min_split_gain': 0.1,  # ゲインの最小値を設定
     # 'reg_alpha': 0.1,  # 正則化を少し加える
     # 'reg_lambda': 0.1,  # 正則化を少し加える
     'nthread': 5,
     'verbose': -1,
     'extra_trees': True,
-    'feature_fraction': 0.1, # 低くして汎化
-    'bagging_fraction': 0.1, # 低くして汎化
+    'feature_fraction': 0.05, # 低くして汎化
+    'bagging_fraction': 0.05, # 低くして汎化
     'bagging_freq': 2,
     'is_unbalance': True,
 }
@@ -84,7 +84,7 @@ for train_index, test_index in tscv.split(X_1):
     gbm = lgb.train(params,
                     lgb_train,
                     valid_sets=[lgb_train, lgb_val],
-                    callbacks=[lgb.early_stopping(stopping_rounds=100)])
+                    callbacks=[lgb.early_stopping(stopping_rounds=1000)])
     
     # 検証セットでの評価（例：予測と評価）
     y_pred = gbm.predict(X_val, num_iteration=gbm.best_iteration)

@@ -45,7 +45,8 @@ def calculate_strategy_return(signals, market_returns):
             position = -1
         elif signals.iloc[i-1] == 'hold':
             # 'hold'の場合、前回のポジションを維持
-            position = position
+            position =  position
+            # position =  0
 
         # 戦略リターンは1個遅れた市場リターンとポジションに依存する
         strategy_return = market_returns.iloc[i] * position
