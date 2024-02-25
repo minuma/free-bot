@@ -39,29 +39,29 @@ params = {
     'objective': 'multiclass',
     'num_class': 3,
     'metric': 'multi_logloss',
-    'n_estimators': 1525, 
+    'n_estimators': 600, 
     # 'learning_rate': 0.05, # 検証用
-    'learning_rate': 0.005, # 本番運用用
-    'num_leaves': 30,  # 少なくする
-    'max_depth': -1,  # 深さを制限する
-    'min_child_samples': 20,  # 増やす
-    # 'cosample_bytree': 0.7,
+    'learning_rate': 0.01, # 本番運用用
+    'num_leaves': 5,  # 少なくする
+    'max_depth': 5,  # 深さを制限する
+    'min_child_samples': 100,  # 増やす
+    # 'cosample_bytree': 0.5,
     # 'n_bins': 5,
     # 'max_bin': 255,
-    # 'subsample': 0.6,
+    # 'subsample': 0.4,
     # 'subsample_freq': 0,
     # 'colsample_bytree': 0.7,
     # 'min_child_weight': 0.001,
     # 'subsample_for_bin': 200000,
     # 'min_split_gain': 0.1,  # ゲインの最小値を設定
-    # 'reg_alpha': 0.1,  # 正則化を少し加える
-    # 'reg_lambda': 0.1,  # 正則化を少し加える
+    'reg_alpha': 3.5,  # 正則化を少し加える
+    'reg_lambda': 3.5,  # 正則化を少し加える
     'nthread': 5,
     'verbose': -1,
     'extra_trees': True,
-    'feature_fraction': 0.05, # 低くして汎化
-    'bagging_fraction': 0.05, # 低くして汎化
-    'bagging_freq': 2,
+    'feature_fraction': 0.5, # 低くして汎化
+    'bagging_fraction': 0.5, # 低くして汎化
+    'bagging_freq': 8,
     'is_unbalance': True,
 }
 

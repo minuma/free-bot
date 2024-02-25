@@ -23,9 +23,11 @@ def generate_trade_signal(y_pred, y_pred_meta):
     for i, (pred, meta) in enumerate(zip(predicted_labels, y_pred_meta)):
         product = predicted_max_values[i] * meta  # 最大値とmeta数値の掛け算
         if product >= 0:
-            if pred == 2: 
+            if pred == 2 or pred == 4: 
+            # if pred == 4: 
                 signals.append('buy')
-            elif pred == 0:
+            elif pred == 0 or pred == 3:
+            # elif pred == 3:
                 signals.append('sell')
             else:
                 signals.append('hold')

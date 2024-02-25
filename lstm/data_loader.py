@@ -10,7 +10,7 @@ def load_data(is_validation=False, is_backtest=False, is_trade=False, is_bybit=F
 def load_bybit_data(is_validation=False, is_backtest=False, is_trade=False):
     minute = '3m'
     pair = 'btc'
-    file_path = f'./lstm/historical/csv/bybit/{pair}/{minute}/historical_price_20240115_30days.csv'
+    file_path = f'./lstm/historical/csv/bybit/{pair}/{minute}/historical_price_20231215_60days.csv'
     if is_validation:
         # file_path = f'./lstm/historical/csv/bybit/{pair}/{minute}/historical_price_20240101.csv'
         file_path = f'./lstm/historical/csv/bybit/{pair}/{minute}/historical_price_20231201.csv'

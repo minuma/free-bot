@@ -46,7 +46,9 @@ def shape_data(df, timesteps=20, is_predict=False, is_gbm=False):
     # トリプルバリアの適用
     if is_gbm:
         # 良い感じの値: 20, 1.5, 1.5  ラベルが30%ずつに分かれる
-        df = set_labels_based_on_ATR(df, look_forward_period=20, atr_multiplier_tp=3, atr_multiplier_sl=3)
+        # df = set_labels_based_on_ATR(df, look_forward_period=20, atr_multiplier_tp=4, atr_multiplier_sl=4)
+        df = set_labels_based_on_MA_slope(df, n=5, slope_threshold=1)
+        # df = set_labels_based_on_ATR_added(df, look_forward_period=20, atr_multiplier_tp=3, atr_multiplier_sl=3, look_forward_extension_period=5)
         # df = classify_future_direction(df, look_forward_period=15, threshold=0.002)
     else:
         # df = set_triple_barrier(df, take_profit=0.01, stop_loss=-0.01, time_horizon=10)
@@ -241,6 +243,81 @@ def set_labels_based_on_ATR(df, look_forward_period, atr_multiplier_tp=4, atr_mu
     print(f"label=2の割合: {label_2_percentage * 100:.2f}%")
 
     return df
+
+def set_labels_based_on_ATR_added(df, look_forward_period, atr_multiplier_tp=4, atr_multiplier_sl=2, look_forward_extension_period=5):
+    df['label'] = 1  # 未定義の状態を表す初期値
+
+    for index in range(len(df) - look_forward_period):
+        base_price = df.iloc[index]['price_close']  # 基準となる現在の価格
+        atr_value = df.iloc[index]['ATR']  # 現在のATR値を取得
+
+        # 利益確定（Take Profit）と損切り（Stop Loss）の閾値を設定
+        take_profit_threshold = base_price + (atr_value * atr_multiplier_tp)
+        stop_loss_threshold = base_price - (atr_value * atr_multiplier_sl)
+
+        # 未来のlook_forward_period間のデータで利益確定や損切りが発生したか確認
+        for future_index in range(index + 1, index + look_forward_period + 1):
+            future_price = df.iloc[future_index]['price_close']
+
+            if future_price >= take_profit_threshold:
+                df.at[index, 'label'] = 2  # 利益確定の条件を満たす
+                # 利益確定後の追加の価格動向を確認
+                for extension_index in range(future_index + 1, min(future_index + 1 + look_forward_extension_period, len(df))):
+                    if df.iloc[extension_index]['price_close'] > future_price:
+                        df.at[index, 'label'] = 4  # 利益確定後にさらに上昇
+                        break
+                break
+            elif future_price <= stop_loss_threshold:
+                df.at[index, 'label'] = 0  # 損切りの条件を満たす
+                # 損切り後の追加の価格動向を確認
+                for extension_index in range(future_index + 1, min(future_index + 1 + look_forward_extension_period, len(df))):
+                    if df.iloc[extension_index]['price_close'] < future_price:
+                        df.at[index, 'label'] = 3  # 損切り後にさらに下落
+                        break
+                break
+
+    label_0_percentage = (df['label'] == 0).mean()
+    label_1_percentage = (df['label'] == 1).mean()
+    label_2_percentage = (df['label'] == 2).mean()
+    label_3_percentage = (df['label'] == 3).mean()
+    label_4_percentage = (df['label'] == 4).mean()
+
+    print(f"label=0の割合: {label_0_percentage * 100:.2f}%")
+    print(f"label=1の割合: {label_1_percentage * 100:.2f}%")
+    print(f"label=2の割合: {label_2_percentage * 100:.2f}%")
+    print(f"label=3の割合: {label_3_percentage * 100:.2f}%")
+    print(f"label=4の割合: {label_4_percentage * 100:.2f}%")
+
+    return df
+
+import numpy as np
+
+def set_labels_based_on_MA_slope(df, n=25, slope_threshold=0.1):
+    # 未来のn期間での移動平均の傾きを計算するために、まず未来の価格平均を計算
+    df['future_MA'] = df['price_close'].rolling(window=n).mean().shift(-n)
+
+    # 未来の移動平均の傾きを計算
+    df['future_MA_slope'] = (df['future_MA'] - df['price_close']) / n
+
+    # 傾きに基づいてラベルを設定
+    df['label'] = np.where(df['future_MA_slope'] > slope_threshold, 2,  # 上昇トレンド
+                           np.where(df['future_MA_slope'] < -slope_threshold, 0,  # 下降トレンド
+                                    1))  # 変化なし
+
+    # 最後のn行は未来のデータがないためラベルを設定できない
+    df['label'].iloc[-n:] = np.nan  # 最後のn期間は未来のデータがないのでNaNを割り当てる
+
+    # 各ラベルの割合を計算
+    label_0_percentage = (df['label'] == 0).mean()
+    label_1_percentage = (df['label'] == 1).mean()
+    label_2_percentage = (df['label'] == 2).mean()
+
+    print(f"label=0の割合: {label_0_percentage * 100:.2f}%")
+    print(f"label=1の割合: {label_1_percentage * 100:.2f}%")
+    print(f"label=2の割合: {label_2_percentage * 100:.2f}%")
+
+    return df
+
 
 def classify_future_direction(df, column='price_close', look_forward_period=5, threshold=0.01):
     """
